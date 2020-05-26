@@ -1,3 +1,6 @@
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+
 #include "SsiCommand.h"
 #include "SsiInstrument.h"
 #include "VideoStreamingListener.h"
