@@ -19,11 +19,41 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-file(GLOB SOURCES "src/*.cpp" "src/*.h")
-add_executable(theodolite_node ${SOURCES})
+find_path(LIBUSB_INCLUDE_DIR
+    NAMES libusb.h
+    PATH "/usr/include/"
+    PATH_SUFFIXES "include" "libusb" "libusb-1.0")
 
-target_include_directories(theodolite_node PUBLIC
-        ${catkin_INCLUDE_DIRS} 
+find_library(LIBUSB_LIBRARY
+    NAMES usb   
+    HITS "/usr/lib/" "/usr/lib64" "/usr/include/"
+    PATH_SUFFIXES "lib" "lib32" "lib64")
+
+link_libraries(${LIBUSB_LIBRARY})
+
+message(${LIBUSB_INCLUDE_DIR})
+message(${LIBUSB_LIBRARY})
+
+#target_include_directories(theodolite_node PUBLIC
+#        ${catkin_INCLUDE_DIRS} 
+#        ${LIBRARIES_FOLDER}/include 
+#        ${LIBRARIES_FOLDER}/src 
+#        ${LIBRARIES_FOLDER}/include/asio 
+#        ${LIBRARIES_FOLDER}/include/asio/asio 
+#        ${LIBRARIES_FOLDER}/include/Common/Connection 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Contracts/SpatialImaging 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.DriverManagement 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Common 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/GNSS 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Scanner 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/TotalStation 
+#        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Vision)
+
+file(GLOB LIBRARIES_SO "lib/*.so")
+set(PROJECT_LIBRARY_LINK ${LIBRARIES_SO})
+link_libraries(${LIBRARIES_FOLDER}/lib)
+
+include_directories(${catkin_INCLUDE_DIRS}
         ${LIBRARIES_FOLDER}/include 
         ${LIBRARIES_FOLDER}/src 
         ${LIBRARIES_FOLDER}/include/asio 
@@ -35,11 +65,19 @@ target_include_directories(theodolite_node PUBLIC
         ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/GNSS 
         ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Scanner 
         ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/TotalStation 
-        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Vision)
+        ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Vision
+        ${LIBUSB_INCLUDE_DIR})
 
+file(GLOB SOURCES "src/*.cpp" "src/*.h")
+add_executable(theodolite_node ${SOURCES})
+#add_executable(theodolite_node src/theodolite_node.cpp)
 
-file(GLOB LIBRARIES_SO "lib/*.so")
-target_link_libraries(theodolite_node ${LIBRAIRIES_SO} ${catkin_LIBRARIES})
+#target_include_directories(theodolite_node ${LIBUSB_INCLUDE_DIR})
+
+target_link_libraries(theodolite_node 
+        ${catkin_LIBRARIES} 
+        ${PROJECT_LIBRARY_LINK}
+        ${LIBUSB_LIBRARY})
 
 
 
