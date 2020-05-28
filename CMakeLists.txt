@@ -10,6 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  roslaunch
 )
 
 catkin_package(
@@ -18,6 +19,8 @@ catkin_package(
   CATKIN_DEPENDS roscpp rospy std_msgs
 #  DEPENDS system_lib
 )
+
+roslaunch_add_file_check(launch)
 
 if(LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
     set(LIBUSB_FOUND TRUE)

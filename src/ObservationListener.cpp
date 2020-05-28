@@ -10,7 +10,8 @@
 
 ObservationListener::ObservationListener()
 {
-    observations = std::vector<std::vector<double>>(4, std::vector<double>());
+    observations = std::vector<std::vector<double>>(5, std::vector<double>());
+    size_vector=0;
 }
 
 ObservationListener::~ObservationListener()
@@ -24,6 +25,7 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
     double vertical_angle = 0;
     double distance = 0;
 	double timestamp = 0;
+    int error = 0;
 
     try
     {
@@ -37,26 +39,33 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
                 SSI::IAngleObservation* angle_observation = (SSI::IAngleObservation*)(*it);
                 horizontal_angle = angle_observation->getAngles().getHorizontalAngle();
                 vertical_angle = angle_observation->getAngles().getVerticalAngle();
-                std::cout << "HA: " << horizontal_angle << "VA: " << vertical_angle << std::endl;
+                //std::cout << "HA: " << horizontal_angle << "VA: " << vertical_angle << std::endl;
             }
             else if((*it)->getObservationType() == SSI::OT_DistanceObservation)
             {
                 SSI::IDistanceObservation* distance_observation = (SSI::IDistanceObservation*)(*it);
                 distance = distance_observation->getSlopeDistance();
-                std::cout << "Dist: " << distance <<  std::endl;
+                //std::cout << "Dist: " << distance <<  std::endl;
             }
 			else if ((*it)->getObservationType() == SSI::OT_TimeObservation)
 			{
 				SSI::ITimeObservation* time = (SSI::ITimeObservation*)(*it);
                 timestamp = time->getTimeUtc();
-                std::cout << "Time: " << time <<  std::endl;
+                //std::cout << "Time: " << time <<  std::endl;
 			}
+        }
+        
+        if(distance == 0)
+        {
+            error = 4;
         }
 
         observations[HORIZONTAL_ANGLE_VECTOR].push_back(horizontal_angle);
         observations[VERTICAL_ANGLE_VECTOR].push_back(vertical_angle);
         observations[DISTANCE_VECTOR].push_back(distance);
         observations[TIMESTAMP_VECTOR].push_back(timestamp);
+        observations[ERROR].push_back(error);
+        size_vector+=1;
 
     }
     catch(SSI::InvalidTrackingObservationsException&e )
@@ -65,19 +74,38 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
         if(e.isTiltOutOfRange())
         {
             reason = "TiltOutOfRange";
+            error = 1;
         }
         else if (e.isWrongTargetDistance())
         {
             reason = "WrongTargetDistance";
+            error = 2;
+        }
+        else
+        {
+            error = 3;
         }
 
+        observations[HORIZONTAL_ANGLE_VECTOR].push_back(-1);
+        observations[VERTICAL_ANGLE_VECTOR].push_back(-1);
+        observations[DISTANCE_VECTOR].push_back(-1);
+        observations[TIMESTAMP_VECTOR].push_back(-1);
+        observations[ERROR].push_back(error);
+        size_vector+=1;
+
         printf("Tracking: %s due to %s\n", e.what(), reason);
+
     }
 }
 
 std::vector<std::vector<double>> ObservationListener::getObservations()
 {
     return observations;
+}
+
+int ObservationListener::getSizeVector()
+{
+    return size_vector;
 }
 
 int ObservationListener::saveFile(std::string file_name, int precision)
@@ -93,20 +121,24 @@ int ObservationListener::saveFile(std::string file_name, int precision)
 		double vertical_angle;
 		double distance;
 		double timestamp;
+        int error;
 		std::string comma = ",";
 
 		std::cout << "File opened" << std::endl;
-		csv_file << "Horizontal angles" << comma << "Vertical angles" << comma << "Distances" << comma << "Time stamps" << std::endl;
+		csv_file << "Horizontal angles" << comma << "Vertical angles" << comma << "Distances" << comma << "Time stamps" << comma << "Error" << std::endl;
         
-        int number_of_measurements = observations[0].size();
-		for(int i = 0; i < number_of_measurements; i++)
+        //int number_of_measurements = observations[0].size();
+        int number_of_measurements = size_vector;
+		for(int i = 1; i < number_of_measurements; i++)
 		{
+            std::cout << "ha: " << horizontal_angle << std::endl;
 			horizontal_angle = observations[HORIZONTAL_ANGLE_VECTOR][i];
 			vertical_angle = observations[VERTICAL_ANGLE_VECTOR][i];
 			distance = observations[DISTANCE_VECTOR][i];
 			timestamp = observations[TIMESTAMP_VECTOR][i];
+            error = observations[ERROR][i];
 
-            csv_file << horizontal_angle << comma << vertical_angle << comma << distance << comma << timestamp << std::endl;
+            csv_file << horizontal_angle << comma << vertical_angle << comma << distance << comma << timestamp << comma << error << std::endl;
 		}
 	}
 	else

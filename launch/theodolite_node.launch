@@ -1,0 +1,8 @@
+<launch>
+    <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen">
+        <param name="target_prism" value= "1" />
+        <param name="number_of_measurments" value= "10" />
+        <param name="save_measurements" value= "true" />
+        <param name="file_measurements" value= "measurements.csv" />
+	</node>
+</launch>

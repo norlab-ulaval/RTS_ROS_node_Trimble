@@ -11,7 +11,8 @@ enum ObservationsIndex
     HORIZONTAL_ANGLE_VECTOR = 0,
     VERTICAL_ANGLE_VECTOR = 1,
     DISTANCE_VECTOR = 2,
-    TIMESTAMP_VECTOR = 3
+    TIMESTAMP_VECTOR = 3,
+    ERROR = 4
 };
 class ObservationListener : 
     public SSI::ITrackingObservationsListener
@@ -27,11 +28,14 @@ public:
 
     std::vector<std::vector<double>> getObservations();
 
+    int getSizeVector();
+
     int saveFile(std::string file_name, int precision);
 
 private:
 
     std::vector<std::vector<double>> observations;
+    int size_vector;
 
 };
 
