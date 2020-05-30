@@ -131,7 +131,6 @@ int ObservationListener::saveFile(std::string file_name, int precision)
         int number_of_measurements = size_vector;
 		for(int i = 1; i < number_of_measurements; i++)
 		{
-            std::cout << "ha: " << horizontal_angle << std::endl;
 			horizontal_angle = observations[HORIZONTAL_ANGLE_VECTOR][i];
 			vertical_angle = observations[VERTICAL_ANGLE_VECTOR][i];
 			distance = observations[DISTANCE_VECTOR][i];

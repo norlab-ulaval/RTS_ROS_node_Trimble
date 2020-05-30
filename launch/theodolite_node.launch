@@ -1,8 +1,14 @@
 <launch>
     <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen">
+
         <param name="target_prism" value= "1" />
-        <param name="number_of_measurments" value= "10" />
-        <param name="save_measurements" value= "true" />
+        <param name="number_of_measurments" value= "0" />
+        
+        <param name="use_lora" value= "true" />
+        <param name="show_data" value= "false" />
+
+        <param name="save_measurements" value= "false" />
         <param name="file_measurements" value= "measurements.csv" />
+
 	</node>
 </launch>

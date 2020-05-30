@@ -72,6 +72,56 @@ else(LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 
 endif (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 
+if(WIRINGPI_LIBRARIES AND WIRINGPI_INCLUDE_DIRS)
+    set(WIRINGPI_FOUND TRUE)
+else(WIRINGPI_LIBRARIES AND WIRINGPI_INCLUDE_DIRS)
+    find_path(WIRINGPI_INCLUDE_DIR
+        NAMES
+	    wiringPi.h
+        PATHS
+          /usr/include
+          /usr/local/include
+          /opt/local/include
+          /sw/include
+	    PATH_SUFFIXES
+	      wiringPi
+    )
+
+    find_library(WIRINGPI_LIBRARY
+        NAMES
+          wiringPi
+        PATHS
+          /usr/lib
+          /usr/local/lib
+          /opt/local/lib
+          /sw/lib
+    )
+
+    set(WIRINGPI_INCLUDE_DIRS
+        ${WIRINGPI_INCLUDE_DIR}
+    )
+    set(WIRINGPI_LIBRARIES
+        ${WIRINGPI_LIBRARY}
+    )
+
+    if(WIRINGPI_INCLUDE_DIRS AND WIRINGPI_LIBRARIES)
+        set(WIRINGPI_FOUND TRUE)
+    endif(WIRINGPI_INCLUDE_DIRS AND WIRINGPI_LIBRARIES)
+
+    if (WIRINGPI_FOUND)
+        if (NOT wiringpi_FIND_QUIETLY)
+            message(STATUS "Found wiringPi:")
+	        message(STATUS " - Includes: ${WIRINGPI_INCLUDE_DIRS}")
+	        message(STATUS " - Libraries: ${WIRINGPI_LIBRARIES}")
+        endif (NOT wiringpi_FIND_QUIETLY)
+    else (WIRINGPI_FOUND)
+        if (wiringpi_FIND_REQUIRED)
+        message(FATAL_ERROR "Could not find libusb")
+        endif (wiringpi_FIND_REQUIRED)
+    endif (WIRINGPI_FOUND)
+
+endif (WIRINGPI_LIBRARIES AND WIRINGPI_INCLUDE_DIRS)
+
 file(GLOB LIBRARIES_SO "lib/*.so")
 set(PROJECT_LIBRARY_LINK ${LIBRARIES_SO})
 
@@ -89,6 +139,7 @@ include_directories(${catkin_INCLUDE_DIRS}
         ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/TotalStation 
         ${LIBRARIES_FOLDER}/include/Trimble.Ssi.Interfaces/Vision
         ${LIBUSB_1_INCLUDE_DIR}
+        ${WIRINGPI_INCLUDE_DIRS}
         )
 
 file(GLOB SOURCES "src/*.cpp" "src/*.h")
@@ -98,6 +149,7 @@ target_link_libraries(theodolite_node
         ${catkin_LIBRARIES} 
         ${PROJECT_LIBRARY_LINK}
         ${LIBUSB_1_LIBRARY}
+        ${WIRINGPI_LIBRARIES}
         )
 
 
