@@ -11,12 +11,16 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   roslaunch
+  message_generation
 )
+
+## Generate added messages and services
+generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES theodolite_node_ROS
-  CATKIN_DEPENDS roscpp rospy std_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
 #  DEPENDS system_lib
 )
 
@@ -142,13 +146,19 @@ include_directories(${catkin_INCLUDE_DIRS}
         ${WIRINGPI_INCLUDE_DIRS}
         )
 
-file(GLOB SOURCES "src/*.cpp" "src/*.h")
+file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*" "src/theodolite_node.cpp")
 add_executable(theodolite_node ${SOURCES})
 
 target_link_libraries(theodolite_node 
         ${catkin_LIBRARIES} 
         ${PROJECT_LIBRARY_LINK}
         ${LIBUSB_1_LIBRARY}
+        ${WIRINGPI_LIBRARIES}
+        )
+
+add_executable(theodolite_listener src/theodolite_listener.cpp)
+target_link_libraries(theodolite_listener 
+        ${catkin_LIBRARIES} 
         ${WIRINGPI_LIBRARIES}
         )
 

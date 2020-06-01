@@ -1,14 +1,21 @@
 <launch>
     <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen">
 
+        <!-- Parameter to set the theodolite number (should be between 1 and 8)-->
         <param name="theodolite_number" value= "1" />
+        <!-- Parameter to set the target number (should be between 1 and 8) -->
         <param name="target_prism" value= "1" />
+        <!-- Parameter to set number of measurements. Should be 0 or higher. 0 means infinite measurments -->
         <param name="number_of_measurments" value= "100" />
         
+        <!-- Parameter to use LoRa antenna. Set true to use it -->
         <param name="use_lora" value= "true" />
+        <!-- Parameter to show data on terminal if needed. Set True to use it -->
         <param name="show_data" value= "false" />
 
+        <!-- Parameter to save file after a finite number of measurements. Set True to use it -->
         <param name="save_measurements" value= "false" />
+        <!-- Name of the file where the measurements will be stored (CSV file only) -->
         <param name="file_measurements" value= "measurements.csv" />
 
 	</node>

@@ -1,0 +1,10 @@
+<launch>
+    <node name="theodolite_listener" type="theodolite_listener" pkg="theodolite_node" output="screen">
+
+        <!-- Parameter to set the rate of the listener. Should be between 1 and 100Hz -->
+        <param name="rate" value= "30" />        
+        <!-- Parameter to show data on terminal if needed. Set True to use it -->
+        <param name="show_data" value= "false" />
+
+	</node>
+</launch>
