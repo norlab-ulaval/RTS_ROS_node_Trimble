@@ -1,8 +1,9 @@
 <launch>
     <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen">
 
+        <param name="theodolite_number" value= "1" />
         <param name="target_prism" value= "1" />
-        <param name="number_of_measurments" value= "0" />
+        <param name="number_of_measurments" value= "100" />
         
         <param name="use_lora" value= "true" />
         <param name="show_data" value= "false" />

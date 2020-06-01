@@ -387,6 +387,9 @@ int main(int argc, char **argv)
     {
         //Get parameters
         //Number of target prism
+        int theodolite_number = 0;
+        n.getParam("/theodolite_node/theodolite_number", theodolite_number);
+        //Number of target prism
         int target_prism = 0;
         n.getParam("/theodolite_node/target_prism", target_prism); 
         //Number of measurements decided   
@@ -500,7 +503,7 @@ int main(int argc, char **argv)
 
                                         if(use_lora)
                                         {
-                                            std::string data = std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
+                                            std::string data = std::to_string(theodolite_number) + ";" + std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
                                             unsigned char *send_message = new unsigned char[data.length()+1];
                                             strcpy((char *)send_message,data.c_str());
      
@@ -547,7 +550,7 @@ int main(int argc, char **argv)
 
                                         if(use_lora)
                                         {
-                                            std::string data = std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
+                                            std::string data = std::to_string(theodolite_number) + ";" + std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
                                             unsigned char *send_message = new unsigned char[data.length()+1];
                                             strcpy((char *)send_message,data.c_str());
      
