@@ -55,7 +55,7 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
 			}
         }
         
-        if(distance == 0)
+        if(distance < 1)
         {
             error = 4;
         }
