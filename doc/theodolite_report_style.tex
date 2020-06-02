@@ -1,0 +1,116 @@
+%----------------------------------------
+% Page style
+
+% Set the page size
+\addtolength{\hoffset}{-1.0in} \addtolength{\voffset}{-0.75in}
+\setlength{\textwidth}{6.75in} \setlength{\textheight}{8.25in}
+\setlength{\headheight}{0.6in}
+\setlength{\headsep}{0.2in}
+
+\setlength{\footskip}{40pt}
+\setlength{\fboxsep}{12pt}
+
+% Set the paragraph skip
+\setlength{\parskip}{3pt}
+
+% Access to a counter for the number of pages
+\usepackage{lastpage}
+
+% To allow text justify on the right
+\usepackage{ragged2e}
+
+%----------------------------------------
+% Title style
+
+\newcommand{\makeCustomTitle}
+{
+\begin{center}
+\LARGE{\textbf{\reportTitle{}}}
+\\
+\vspace{5pt}
+\normalsize{\reportAuthors{}}
+\\
+\reportDate{}
+\end{center}
+\begin{flushright}
+\footnotesize{
+\begin{tabu}{ccX}
+\toprule
+\emph{Version} & \emph{Date} & \emph{Comments} \\
+\midrule
+\reportVersions{} \\
+\bottomrule
+\end{tabu}
+}
+\end{flushright}
+}
+
+%----------------------------------------
+% Section style
+\usepackage{sectsty}
+
+% Set the section labeling font
+\allsectionsfont{\textsf\bfseries}
+
+%----------------------------------------
+% Caption style
+\usepackage[font=small, labelfont=bf, skip=5pt]{caption}
+
+%----------------------------------------
+% header style
+\usepackage{fancyhdr}
+
+
+
+% Define the title page style
+\fancypagestyle{titlePage}{%
+\fancyhf{}%
+
+\fancyhead[L]{\includegraphics[height=0.45in]{UL_N}}
+\fancyhead[C]{\raisebox{0.2in}{\textsc{Technical Report}}}
+\fancyhead[R]{\includegraphics[height=0.45in]{norlab_logo_acronym_dark}}
+\fancyfoot[C]{\thepage/\pageref*{LastPage}}
+
+\renewcommand{\headrulewidth}{0.1pt}
+\renewcommand{\footrulewidth}{0.2pt}
+}
+
+% Define the page style for the other pages
+\fancypagestyle{plain}{%
+\fancyhf{}
+\fancyhead[L]{\reportTitle{}}
+\fancyfoot[C]{\thepage/\pageref*{LastPage}}
+\renewcommand{\headrulewidth}{0.1pt}
+\renewcommand{\footrulewidth}{0.1pt}
+}
+
+% Set the page style for all the document except the first page
+\pagestyle{plain}
+
+%----------------------------------------
+% footnote style
+\usepackage{fnpos}
+% Fix the footnotes location
+\makeFNbottom \makeFNbelow
+
+% ---------------------------------------------------------------
+% Author
+
+\author{\reportAuthors{} \\
+       Laval University\\
+       1065, av. de la Médecine \\
+       Quebec, Qc \\
+       Canada G1V 0A6 \\
+}
+
+% ---------------------------------------------------------------
+% PDF setup
+\hypersetup{%
+    pdftitle={\reportTitle},
+    pdfauthor={\@author},
+    pdfkeywords={research, project, robotics, norlab, Northern Robotics Lab, Master's},
+    pdfsubject={},
+    pdfstartview={},
+    urlcolor=cyan,
+    linkcolor=red,
+}%

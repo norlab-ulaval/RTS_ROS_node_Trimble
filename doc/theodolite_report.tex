@@ -1,0 +1,149 @@
+\documentclass[10pt,letterpaper,oneside]{article}
+
+\usepackage{multirow}
+\usepackage{makecell}
+
+\usepackage{lscape}
+\usepackage{pdflscape}
+
+\input{./latexGoodPractices/preamble}
+
+%==============================================================
+% FILL THIS SECTION
+
+\newcommand{\reportTitle}{Theodolite notice of use}
+\newcommand{\reportAuthors}{Maxime Vaidis}
+\newcommand{\reportDate}{\today} % or manually: November 23, 2017
+
+\newcommand{\reportVersions}{
+1.0 & \today & Initial writing %\\
+%1.0 & November 23, 2017 & Final writing
+}
+% Change to your specific bibliography file
+\addbibresource{./references.bib}
+%==============================================================
+
+\usepackage{chemist}
+\newcommand{\ie}{i.e., }
+\newcommand{\eg}{i.e., }
+% Use subcaption package
+\usepackage{subcaption}
+
+%\acrodef{DARPA}{Defense Advanced Research Projects Agency}
+
+% ---------------------------------------------------------------
+% Load style
+\input{theodolite_report_style.tex}
+% ---------------------------------------------------------------
+
+
+% Add your other packages here
+% make sure to check prembule.tex first!
+
+
+%================================================================
+\begin{document}
+\makeCustomTitle
+\thispagestyle{titlePage}
+
+% ---------------------------------------------------------------
+\section{Introduction}
+
+Description theodolite en général \\
+différent usage \\
+Particularité \\
+
+% -------------------------------------------------------------
+\section{Equipements}
+
+Courte introduction sur le matériel qui va être utilisé
+
+\subsection{Theodolite}
+
+Description du theodolite \\
+Numéro de série \\
+Détail pratique \\
+Accessoire \\
+Module de communication \\
+
+\subsection{Target}
+
+Description des différentes targets
+
+\subsection{Communication part}
+
+Description des modules LoRa sur Draguino
+
+% -------------------------------------------------------------
+\section{Software}
+
+Courte introduction sur les moyens d'utilisation du theodolite
+
+\subsection{Trimble Access software (Windows)}
+
+Description des possibilité offertes par le logiciel de Trimble
+
+\subsection{Compile library for linux}
+
+Description du code linux
+
+% -------------------------------------------------------------
+\section{ROS node}
+
+Courte introduction sur le fait d'utiliser ROS
+
+\subsection{Acquisition of data and sender}
+
+Description du code de ROS pour envoyer les données
+
+\subsection{Receiver}
+
+Description du code de ROS pour recevoir les données
+
+% -------------------------------------------------------------
+\section{Deployement}
+
+Courte introduction pour le déploiement de différents theodolite
+
+\subsection{Calibration of theodolite}
+
+Mise en place sur trépied \\
+Réglage du tilt \\
+Autres ? \\
+
+\subsection{Resection}
+
+Pourquoi ?
+Comment définir le repère du theodolite avec une/plusieurs cibles \\
+Si pas de prism ? \\
+
+\subsection{ROS node receiver}
+
+Mise en marche du code pour le receiver
+
+\subsection{ROS node sender}
+
+Mise en marche du code pour le sender
+
+% -------------------------------------------------------------
+\section{Issue/error}
+
+Table des erreurs pouvant survenir durant le déploiement et les solutions à apporter
+
+% -------------------------------------------------------------
+
+
+%\begin{figure}[htb]
+%	\centering
+%	\includegraphics[width=0.8\textwidth]{./figs/artifacts.pdf}
+%	\caption{
+%		On the left: the accuracy-based scoring system. On the right: artifacts of the Urban circuit as well as of the Tunnel circuit. Courtesy of \ac{DARPA}.
+%	}
+%	\label{fig:artifacts}
+%\end{figure}
+
+% ---------------------------------------------------------------
+\printbibliography
+
+
+\end{document}

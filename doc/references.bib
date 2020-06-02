@@ -1,0 +1,190 @@
+@INPROCEEDINGS{Chen1991,
+	author={Y. {Chen} and G. {Medioni}},
+	booktitle={Proceedings. 1991 IEEE International Conference on Robotics and Automation},
+	title={Object modeling by registration of multiple range images},
+	year={1991},
+	volume={},
+	number={},
+	pages={2724-2729 vol.3},
+	keywords={functional equations;minimisation;pattern recognition;pattern recognition;functional equations;minimisation;image registration;object modelling;range images;three-dimensional information;modeling procedure;complex objects;Biological system modeling;Intelligent robots;Object recognition;Design automation;Data acquisition;Manufacturing automation;Sensor phenomena and characterization;Intelligent systems;Registers;Contracts},
+	doi={10.1109/ROBOT.1991.132043},
+	ISSN={null},
+	month={April},}
+
+@ARTICLE{Besl1992,
+	author={P. J. {Besl} and N. D. {McKay}},
+	journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+	title={A method for registration of 3-D shapes},
+	year={1992},
+	volume={14},
+	number={2},
+	pages={239-256},
+	keywords={computational geometry;convergence of numerical methods;iterative methods;optimisation;pattern recognition;picture processing;3D shape registration;pattern recognition;point set registration;iterative closest point;geometric entity;mean-square distance metric;convergence;geometric model;Solid modeling;Motion estimation;Iterative closest point algorithm;Iterative algorithms;Testing;Inspection;Shape measurement;Iterative methods;Convergence;Quaternions},
+	doi={10.1109/34.121791},
+	ISSN={1939-3539},
+	month={Feb},}
+
+@article{Pomerleau2013,
+	abstract = {Many modern sensors used for mapping produce 3D point clouds, which are typically registered together using the iterative closest point (ICP) algorithm. Because ICP has many variants whose performances depend on the environment and the sensor, hundreds of variations have been published. However, no comparison frameworks are available, leading to an arduous selection of an appropriate variant for particular experimental conditions. The first contribution of this paper consists of a protocol that allows for a comparison between ICP variants, taking into account a broad range of inputs. The second contribution is an open-source ICP library, which is fast enough to be usable in multiple real-world applications, while being modular enough to ease comparison of multiple solutions. This paper presents two examples of these field applications. The last contribution is the comparison of two baseline ICP variants using data sets that cover a rich variety of environments. Besides demonstrating the need for improved ICP methods for natural, unstructured and information-deprived environments, these baseline variants also provide a solid basis to which novel solutions could be compared. The combination of our protocol, software, and baseline results demonstrate convincingly how open-source software can push forward the research in mapping and navigation. {\textcopyright} 2013 Springer Science+Business Media New York.},
+	author = {Pomerleau, Fran{\c{c}}ois and Colas, Francis and Siegwart, Roland and Magnenat, St{\'{e}}phane},
+	doi = {10.1007/s10514-013-9327-2},
+	issn = {09295593},
+	journal = {Autonomous Robots},
+	keywords = {Experimental protocol,Iterative closest point,Mapping,Open-source,Registration,SLAM},
+	number = {3},
+	pages = {133--148},
+	title = {{Comparing ICP variants on real-world data sets: Open-source library and experimental protocol}},
+	volume = {34},
+	year = {2013}
+}
+
+@article{Pomerleau2014,
+	abstract = {New applications of mobile robotics in dynamic urban areas require more than the single-session geometric maps that have dominated simultaneous localization and mapping (SLAM) research to date; maps must be updated as the environment changes and include a semantic layer (such as road network information) to aid motion planning in dynamic environments. We present an algorithm for long-term localization and mapping in real time using a three-dimensional (3D) laser scanner. The system infers the static or dynamic state of each 3D point in the environment based on repeated observations. The velocity of each dynamic point is estimated without requiring object models or explicit clustering of the points. At any time, the system is able to produce a most-likely representation of underlying static scene geometry. By storing the time history of velocities, we can infer the dominant motion patterns within the map. The result is an online mapping and localization system specifically designed to enable long-term autonomy within highly dynamic environments. We validate the approach using data collected around the campus of ETH Zurich over seven months and several kilometers of navigation. To the best of our knowledge, this is the first work to unify long-term map update with tracking of dynamic objects.},
+	author = {Pomerleau, Fran{\c{c}}ois and Kr{\"{u}}si, Philipp and Colas, Francis and Furgale, Paul and Siegwart, Roland},
+	doi = {10.1109/ICRA.2014.6907397},
+	isbn = {9781479936854},
+	issn = {10504729},
+	journal = {Proceedings - IEEE International Conference on Robotics and Automation},
+	keywords = {ICP,Long-term mapping,SLAM,dynamic obstacles,kd-tree,registration,robot,scan matching},
+	number = {1},
+	pages = {3712--3719},
+	title = {{Long-term 3D map maintenance in dynamic environments}},
+	year = {2014}
+}
+
+@article{Redmon2015,
+	abstract = {We present YOLO, a new approach to object detection. Prior work on object detection repurposes classifiers to perform detection. Instead, we frame object detection as a regression problem to spatially separated bounding boxes and associated class probabilities. A single neural network predicts bounding boxes and class probabilities directly from full images in one evaluation. Since the whole detection pipeline is a single network, it can be optimized end-to-end directly on detection performance. Our unified architecture is extremely fast. Our base YOLO model processes images in real-time at 45 frames per second. A smaller version of the network, Fast YOLO, processes an astounding 155 frames per second while still achieving double the mAP of other real-time detectors. Compared to state-of-the-art detection systems, YOLO makes more localization errors but is far less likely to predict false detections where nothing exists. Finally, YOLO learns very general representations of objects. It outperforms all other detection methods, including DPM and R-CNN, by a wide margin when generalizing from natural images to artwork on both the Picasso Dataset and the People-Art Dataset.},
+	archivePrefix = {arXiv},
+	arxivId = {1506.02640},
+	author = {Redmon, Joseph and Divvala, Santosh and Girshick, Ross and Farhadi, Ali},
+	doi = {10.1109/CVPR.2016.91},
+	eprint = {1506.02640},
+	isbn = {9781467388504},
+	issn = {10636919},
+	journal = {Proceedings of the IEEE Computer Society Conference on Computer Vision and Pattern Recognition},
+	month = {jun},
+	pages = {779--788},
+	title = {{You Only Look Once: Unified, Real-Time Object Detection}},
+	url = {http://arxiv.org/abs/1506.02640},
+	volume = {2016-Decem},
+	year = {2015}
+}
+
+@article{yolov3,
+	title={YOLOv3: An Incremental Improvement},
+	author={Redmon, Joseph and Farhadi, Ali},
+	journal = {arXiv},
+	year={2018}
+}
+
+@article{Bayer2019a,
+	author = {Bayer, Jan},
+	month = {may},
+	title = {{Autonomous Exploration of Unknown Rough Terrain with Hexapod Walking Robot}},
+	year = {2019}
+}
+
+@inproceedings{Pragr2019,
+	abstract = {In this paper, we address motion efficiency in autonomous robot exploration with multi-legged walking robots that can traverse rough terrains at the cost of lower efficiency and greater body vibration. We propose a robotic system for online and incremental learning of the terrain traversal cost that is immediately utilized to reason about next navigational goals in building spatial model of the robot surrounding. The traversal cost experienced by the robot is characterized by incrementally constructed Gaussian Processes using Bayesian Committee Machine. During the exploration, the robot builds the spatial terrain model, marks untraversable areas, and leverages the Gaussian Process predictive variance to decide whether to improve the spatial model or decrease the uncertainty of the terrain traversal cost. The feasibility of the proposed approach has been experimentally verified in a fully autonomous deployment with the hexapod walking robot.},
+	author = {Pragr, Milos and Cizek, Petr and Bayer, Jan and Faigl, Jan},
+	booktitle = {Robotics: Science and Systems XV},
+	doi = {10.15607/RSS.2019.XV.040},
+	isbn = {978-0-9923747-5-4},
+	month = {jun},
+	publisher = {Robotics: Science and Systems Foundation},
+	title = {{Online Incremental Learning of the Terrain Traversal Cost in Autonomous Exploration}},
+	url = {http://www.roboticsproceedings.org/rss15/p40.pdf},
+	year = {2019}
+}
+
+
+@article{Pfaff2007,
+	abstract = {Elevation maps are a popular data structure for representing the environment of a mobile robot operating outdoors or on not-flat surfaces. Elevation maps store in each cell of a discrete grid the height of the surface at the corresponding place in the environment. However, the use of this 2-dimensional representation, is disadvantageous when utilized for mapping with mobile robots operating on the ground, since vertical or overhanging objects cannot be represented appropriately. Furthermore, such objects can lead to registration errors when two elevation maps have to be matched. In this paper, an approach is proposed that allows a mobile robot to deal with vertical and overhanging objects in elevation maps. The approach classifies the points in the environment according to whether they correspond to such objects or not. Also presented is a variant of the ICP algorithm that utilizes the classification of cells during the data association. Additionally, it is shown how the constraints computed by the ICP algorithm can be applied to determine globally consistent alignments. Experiments carried out with a real robot in an outdoor environment demonstrate that the proposed approach yields highly accurate elevation maps even in the case of loops. Experimental results are presented demonstrating that that the proposed classification increases the robustness of the scan matching process. {\textcopyright} 2007 SAGE Publications.},
+	author = {Pfaff, Patrick and Triebel, Rudolph and Burgard, Wolfram},
+	doi = {10.1177/0278364906075165},
+	issn = {02783649},
+	journal = {International Journal of Robotics Research},
+	keywords = {Elevation maps,Outdoor robots,SLAM,Surface maps},
+	number = {2},
+	pages = {217--230},
+	title = {{An efficient extension to elevation maps for outdoor terrain mapping and loop closing}},
+	volume = {26},
+	year = {2007}
+}
+
+@article{Felzenszwalb2012,
+	abstract = {This paper provides linear-time algorithms for solving a class of minimization problems in- volving a cost function with both local and spatial terms. These problems can be viewed as a generalization of classical distance transforms of binary images, where the binary image is replaced by an arbitrary sampled function. Alternatively they can be viewed in terms of the minimum convolution of two functions, which is an important operation in grayscale mor- phology. A useful consequence of our techniques is a simple, fast method for computing the Euclidean distance transform of a binary image. The methods are also applicable to Viterbi decoding, belief propagation and optimal control.},
+	author = {Felzenszwalb, Pedro F. and Huttenlocher, Daniel P.},
+	doi = {10.4086/toc.2012.v008a019},
+	file = {:home/dominic/Documents/lectures/ULAVAL/IFT-7026-projet{\_}experimental/references/traversability{\_}mapping/Distance Transforms of Sampled Functions.pdf:pdf},
+	issn = {1557-2862},
+	journal = {Theory of Computing},
+	keywords = {Belief propagation,Binary image,Combinatorics,Convolution,Discrete mathematics,Distance transform,Euclidean distance,Mathematical optimization,Mathematics,Technical report,U-matrix,Viterbi decoder},
+	number = {1},
+	pages = {415--428},
+	title = {{Distance Transforms of Sampled Functions}},
+	url = {http://www.theoryofcomputing.org/articles/v008a019},
+	volume = {8},
+	year = {2012}
+}
+
+@article{Schwarz2016,
+	abstract = {Planetary exploration scenarios illustrate the need for autonomous robots that are capable to operate in unknown environments without direct human interaction. At the DARPA Robotics Challenge, we demonstrated that our Centaur-like mobile manipulation robot Momaro can solve complex tasks when teleoperated. Motivated by the DLR SpaceBot Cup 2015, where robots should explore a Mars-like environment, find and transport objects, take a soil sample, and perform assembly tasks, we developed autonomous capabilities for Momaro. Our robot perceives and maps previously unknown, uneven terrain using a 3D laser scanner. Based on the generated height map, we assess drivability, plan navigation paths, and execute them using the omnidirectional drive. Using its four legs, the robot adapts to the slope of the terrain. Momaro perceives objects with cameras, estimates their pose, and manipulates them with its two arms autonomously. For specifying missions, monitoring mission progress, on-the-fly reconfiguration, and teleoperation, we developed a ground station with suitable operator interfaces. To handle network communication interruptions and latencies between robot and ground station, we implemented a robust network layer for the ROS middleware. With the developed system, our team NimbRo Explorer solved all tasks of the DLR SpaceBot Camp 2015. We also discuss the lessons learned from this demonstration.},
+	author = {Schwarz, Max and Beul, Marius and Droeschel, David and Sch{\"{u}}ller, Sebastian and Periyasamy, Arul Selvam and Lenz, Christian and Schreiber, Michael and Behnke, Sven},
+	doi = {10.3389/frobt.2016.00057},
+	issn = {2296-9144},
+	journal = {Frontiers in Robotics and AI},
+	keywords = {Mapping,Mobile manipulation,Navigation,Perception for grasping and manipulation,Space robotics and automation},
+	month = {oct},
+	number = {OCT},
+	title = {{Supervised Autonomy for Exploration and Mobile Manipulation in Rough Terrain with a Centaur-Like Robot}},
+	url = {http://journal.frontiersin.org/article/10.3389/frobt.2016.00057/full},
+	volume = {3},
+	year = {2016}
+}
+
+@inproceedings{Bayer2019b,
+	abstract = {In this paper, we report on the deployment of the combination of commercially available off-the-shelf embedded visual localization system and RGB-D camera in an autonomous robotic exploration performed by small hexapod walking robot. Since the multi-legged walking robot is capable of traversing rough terrains, the addressed exploration problem is to create a map of an unknown environment while simultaneously performing the traversability assessment of the explored environment to efficiently and safely reach next navigational waypoints. The proposed system is targeted to run onboard of small multi-legged robots, and therefore, the system design is focused on computationally efficient approaches using relatively lightweight components. Therefore, we take advantages of the recently introduced tracking camera Intel RealSense T265 and RGB-D camera Intel RealSense D435 that are deployed to our developed autonomous hexapod walking robot that is equipped with adaptive locomotion control. Together with the proposed computationally efficient data representation and traversability assessment, the developed system supports onboard mapping and online decision-making within the exploration strategy even on a platform with low computational capabilities. Based on the reported experimental evaluation of the tracking camera, the developed system provides sufficiently accurate localization, and the robot has been able to explore indoor and outdoor environments fully autonomously.},
+	author = {Bayer, Jan and Faigl, Jan},
+	booktitle = {2019 European Conference on Mobile Robots (ECMR)},
+	doi = {10.1109/ECMR.2019.8870968},
+	isbn = {978-1-7281-3605-9},
+	month = {sep},
+	pages = {1--6},
+	publisher = {IEEE},
+	title = {{On Autonomous Spatial Exploration with Small Hexapod Walking Robot using Tracking Camera Intel RealSense T265}},
+	url = {https://ieeexplore.ieee.org/document/8870968/},
+	year = {2019}
+}
+
+@article{Hart1968,
+	abstract = {Article initial pr{\'{e}}sentant l'algo A*},
+	author = {Hart, Peter E and Nilsson, Nils J and Raphael, Bertram},
+	journal = {IEEE Transactions of systems science and cybernetics},
+	keywords = {A*,Graphs,Path finding},
+	number = {2},
+	pages = {100--107},
+	title = {{the Heuristic Determination}},
+	year = {1968}
+}
+
+@article{Colas2013,
+	abstract = {One milestone for autonomous mobile robotics is to endow robots with the capability to compute the plans and motor commands necessary to reach a defined goal position. For indoor or car-like robots moving on flat terrain, this problem is well mastered and open-source software can be deployed to such robots. However, for many applications such as search and rescue, ground robots must handle three-dimensional terrain. In this article, we present a system that is able to plan and execute a path in a complex environment starting from noisy sensor input. In order to cope with the complexity of a high-dimensional configuration space, we separate position and configuration planning. We demonstrate our system on a search and rescue robot with flippers by climbing up and down a difficult curved staircase. {\textcopyright} 2013 IEEE.},
+	author = {Colas, Francis and Mahesh, Srivatsa and Pomerleau, Francois and Liu, Ming and Siegwart, Roland},
+	doi = {10.1109/IROS.2013.6696431},
+	isbn = {9781467363587},
+	issn = {21530858},
+	journal = {IEEE International Conference on Intelligent Robots and Systems},
+	pages = {722--727},
+	title = {{3D path planning and execution for search and rescue ground robots}},
+	year = {2013}
+}
+
+@manual{Mobilicom,
+	author = {{Mobilicom LTD}},
+	title = {{MCU-30 User Manual}}
+	date = {February 14 ,2018}
+	OPTlanguage = {English},
+	OPTversion = {Version 1.8.4},
+}
+
