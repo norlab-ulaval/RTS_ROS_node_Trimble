@@ -29,7 +29,8 @@
 % Use subcaption package
 \usepackage{subcaption}
 
-%\acrodef{DARPA}{Defense Advanced Research Projects Agency}
+\acrodef{ICP}{Iterative Closest Point}
+\acrodef{GPS}{Global Position System}
 
 % ---------------------------------------------------------------
 % Load style
@@ -49,31 +50,52 @@
 % ---------------------------------------------------------------
 \section{Introduction}
 
-En robotique mobile, il peut être important d'avoir des données de référence afin de comparer et valider les résultats obtenus par un algorithme.
-Cette comparaison est d'autant plus importante pour évaluer la localisation d'une plateforme mobile.
-En effet, les capteurs tels que les GPS ont une imprécision pouvant être de plusieurs mètres et ne peuvent pas être une source fiable pour évaluer finement un algorithme de localisation.
-Les algorithmes tels que ICP sont plus précis, mais possèdent des biais sur le long termes qui faussent la localisation.
+In mobile robotics, it may be important to have reference data in order to compare and validate the results obtained by an algorithm.
+This comparison is important for assessing the location of a mobile platform.
+Indeed, sensors such as \ac{GPS} have an inaccuracy which can be several meters and cannot be a reliable source to accurately evaluate a location algorithm.
+Algorithms such as \ac{ICP} are more accurate, but have long-term biases which distort location.
 
-Pour palier ce problème d'imprécision des mesures, certains corps de métiers comme les topographes ou les géomètre ont recours à des appareils appelés théodolite.
-Un théodolite est un instrument de géodésie complété d’un instrument d'optique, qui permet de mesurer des angles dans les deux plans horizontaux et verticaux afin de déterminer une direction.
-Ces appareils peuvent également mesurer la distance d'une cible par rapport à eux.
-Leur précision angulaire est inférieur au millième de degré, et la précision de la mesure de distance est de l'ordre du millimètre.
+To overcome this problem of inaccuracy measurements, some trades such topographers or surveyors use devices called theodolite.
+A theodolite is a geodetic instrument supplemented by an optical instrument, which makes it possible to measure angles in both horizontal and vertical planes in order to determine a direction.
+These devices can also measure the distance of a target from them.
+Their angular accuracy is less than one thousandth of a degree, and the accuracy of the distance measurement is of the order of a millimeter.
 
-De ce fait, il est possible d'obtenir un relevé très précis de n'importe quels objets ciblés.
-En plaçant différentes cibles sur un robot mobile, nous pourrions alors obtenir sa pose complète de référence.
-Ces données de référence peuvent alors nous servir à évaluer la précision d'ICP et quantifier son biais dans le temps. 
+As a result, it is possible to obtain a very accurate survey of any target objects.
+By placing different targets on a mobile robot, we could then get its full reference pose.
+These baseline data can then be used to assess \ac{ICP} accuracy and quantify its bias over time.
+
+%En robotique mobile, il peut être important d'avoir des données de référence afin de comparer et valider les résultats obtenus par un algorithme.
+%Cette comparaison est d'autant plus importante pour évaluer la localisation d'une plateforme mobile.
+%En effet, les capteurs tels que les GPS ont une imprécision pouvant être de plusieurs mètres et ne peuvent pas être une source fiable pour évaluer finement un algorithme de localisation.
+%Les algorithmes tels que ICP sont plus précis, mais possèdent des biais sur le long termes qui faussent la localisation.
+%
+%Pour palier ce problème d'imprécision des mesures, certains corps de métiers comme les topographes ou les géomètre ont recours à des appareils appelés théodolite.
+%Un théodolite est un instrument de géodésie complété d’un instrument d'optique, qui permet de mesurer des angles dans les deux plans horizontaux et verticaux afin de déterminer une direction.
+%Ces appareils peuvent également mesurer la distance d'une cible par rapport à eux.
+%Leur précision angulaire est inférieur au millième de degré, et la précision de la mesure de distance est de l'ordre du millimètre.
+%
+%De ce fait, il est possible d'obtenir un relevé très précis de n'importe quels objets ciblés.
+%En plaçant différentes cibles sur un robot mobile, nous pourrions alors obtenir sa pose complète de référence.
+%Ces données de référence peuvent alors nous servir à évaluer la précision d'ICP et quantifier son biais dans le temps. 
 
 % -------------------------------------------------------------
 \section{Equipements}
 
-Afin d'effectuer nos relevés, nous aurons besoin de plusieurs équipements en plus du théodolite.
-Il s'agit de moyens de communication entre le théodolite et la plateforme d'acquisition des données, mais également des différents cibles utilisés pour mesurer la distance avec précision.
-Ces différents équipements sont présentés dans cette section.
+In order to carry out our surveys, we will need several equipment in addition to the theodolite.
+These are means of communication between the theodolite and the data acquisition platform, but also the different targets used to accurately measure distance.
+These different equipment are presented in this section.
+
+%Afin d'effectuer nos relevés, nous aurons besoin de plusieurs équipements en plus du théodolite.
+%Il s'agit de moyens de communication entre le théodolite et la plateforme d'acquisition des données, mais également des différents cibles utilisés pour mesurer la distance avec précision.
+%Ces différents équipements sont présentés dans cette section.
 
 \subsection{Theodolite}
 
-Dans cette section, une description précise du théodolite sera donné, ainsi que l'explication de sa mise en marche pour la prise de mesure.
-Le théodolite que nous utilisons est une Station Totale Trimble S7, montré à la \autoref{fig:trimbleS7}.
+%Dans cette section, une description précise du théodolite sera donné, ainsi que l'explication de sa mise en marche pour la prise de mesure.
+%Le théodolite que nous utilisons est une Station Totale Trimble S7, montré à la \autoref{fig:trimbleS7}.
+
+In this section, a precise description of the theodolite will be given, as well as the explanation of its start-up for the measurement.
+The theodolite we use is a Trimble Total Station S7, shown in \autoref{fig:trimbleS7}.
 
 \begin{figure}[htb]
 	\centering
@@ -82,16 +104,27 @@ Le théodolite que nous utilisons est une Station Totale Trimble S7, montré à 
 	\label{fig:trimbleS7}
 \end{figure}
 
-La fiche technique de ce modèle de théodolite est donné dans ce \href{run:S7_DS_french.pdf}{Technical Guide French} ou dans ce \href{run:S7_DS_english.pdf}{Technical Guide English}.
-Une courte description des capacités du théodolite y est donné.
-La précision et la performance des différents capteurs y sont renseignées, ainsi que la durée des batteries.
+The data sheet for this theodolite model is given in this link \href{run:S7_DS_french.pdf}{Technical Guide French} or in this link \href{run:S7_DS_english.pdf}{Technical Guide English}.
+A short description of the abilities of the theodolite is given.
+The accuracy and performance of the different sensors are given, as well as the duration of the batteries.
 
-Un guide de démarrage rapide de ce modèle est également donné dans ce \href{run:Quick_Start_Guide_French.pdf}{Quick Start Guide French} ou dans ce \href{run:Quick_Start_Guide_English.pdf}{Quick Start Guide English}.
-Dans ce guide, une description des équipements du théodolite y est donné.
-La première prise en main des équipements y est également expliquée afin de mettre en marche le théodolite pour la prise de mesure.
+A quick start guide for this template is also given in this link \href{run:Quick_Start_Guide_French.pdf}{Quick Start Guide French} or in this link \href{run:Quick_Start_Guide_English.pdf}{Quick Start Guide English}.
+In this guide, a description of the equipment of the theodolite is given.
+The first hand of the equipment is also explained in order to start the theodolite for the measurement.
 
-Avec ce theodolite, d'autres accessoires utiles peuvent être utilisés.
-Le laboratoire possède une tablette numérique pouvant être fixé sur le théodolite, montré à \autoref{fig:tablet}.
+%La fiche technique de ce modèle de théodolite est donné dans ce \href{run:S7_DS_french.pdf}{Technical Guide French} ou dans ce \href{run:S7_DS_english.pdf}{Technical Guide English}.
+%Une courte description des capacités du théodolite y est donné.
+%La précision et la performance des différents capteurs y sont renseignées, ainsi que la durée des batteries.
+%
+%Un guide de démarrage rapide de ce modèle est également donné dans ce \href{run:Quick_Start_Guide_French.pdf}{Quick Start Guide French} ou dans ce \href{run:Quick_Start_Guide_English.pdf}{Quick Start Guide English}.
+%Dans ce guide, une description des équipements du théodolite y est donné.
+%La première prise en main des équipements y est également expliquée afin de mettre en marche le théodolite pour la prise de mesure.
+
+With this theodolite, other useful accessories can be used.
+The laboratory has a digital tablet that can be attached to the theodolite, shown in \autoref{fig:tablet}.
+
+%Avec ce theodolite, d'autres accessoires utiles peuvent être utilisés.
+%Le laboratoire possède une tablette numérique pouvant être fixé sur le théodolite, montré à \autoref{fig:tablet}.
 
 \begin{figure}[htb]
 	\centering
@@ -100,41 +133,66 @@ Le laboratoire possède une tablette numérique pouvant être fixé sur le théo
 	\label{fig:tablet}
 \end{figure}
 
-Cette tablette possède un OS windows avec le logiciel Trimble Access qui permet de communiquer des commandes au théodolite.
-Une desciption détaillée de ce logiciel sera donnée dans la \autoref{sec:software}.
-Le théodolite peut prendre en compte différent moyens de communication: Bluetooth, Radio et USB.
-Le mode Bluetooth peut être direct (ordinateur vers théodolite via l'application Trimble Access).
-Ce mode Bluetooth peut aussi être utilisé pour une communication indirect vers le théodolite.
-Dans ce cas, il faut utiliser un relai Trimble TDL 2.4 qui assurera la liaison entre l'ordinateur et le théodolite.
-L'ordinateur doit se connecter à ce relai par Bluetooth via l'application Trimble Access. 
-Par la suite, le relai va communiquer par radio avec le théodolite, ce qui permet de pouvoir le contrôler à distance (jusqu'à environ 600m).
-Le dernier mode de communication est par USB.
-C'est celui que l'on va utiliser principalement par la suite.
-Tout ces moyens de communication seront décrit en détail avec la présentation du logiciel Trimble Access dans la \autoref{sec:software}.
+This tablet has a windows OS with Trimble Access software that allows communicating commands to the theodolite.
+A detailed description of this software will be given in the \autoref{sec:software}.
+The theodolite can take into account different means of communication: Bluetooth, Radio and USB.
+Bluetooth mode can be direct (computer to theodolite via Trimble Access).
+This Bluetooth mode can also be used for indirect communication to the theodolite.
+In this case, a Trimble TDL 2.4 relay should be used to link the computer to the theodolite.
+The computer must connect to this relay via Bluetooth, and via the Trimble Access application. 
+Afterwards, the relay will communicate by radio with the theodolite, which allows to control it remotely (up to about 600 meters).
+The last mode of communication is via USB.
+This is the one we will use mainly afterwards.
+All these means of communication will be described in detail with the presentation of the Trimble Access software in the \autoref{sec:software}.
+
+%Cette tablette possède un OS windows avec le logiciel Trimble Access qui permet de communiquer des commandes au théodolite.
+%Une desciption détaillée de ce logiciel sera donnée dans la \autoref{sec:software}.
+%Le théodolite peut prendre en compte différent moyens de communication: Bluetooth, Radio et USB.
+%Le mode Bluetooth peut être direct (ordinateur vers théodolite via l'application Trimble Access).
+%Ce mode Bluetooth peut aussi être utilisé pour une communication indirect vers le théodolite.
+%Dans ce cas, il faut utiliser un relai Trimble TDL 2.4 qui assurera la liaison entre l'ordinateur et le théodolite.
+%L'ordinateur doit se connecter à ce relai par Bluetooth via l'application Trimble Access. 
+%Par la suite, le relai va communiquer par radio avec le théodolite, ce qui permet de pouvoir le contrôler à distance (jusqu'à environ 600m).
+%Le dernier mode de communication est par USB.
+%C'est celui que l'on va utiliser principalement par la suite.
+%Tout ces moyens de communication seront décrit en détail avec la présentation du logiciel Trimble Access dans la \autoref{sec:software}.
 
 \subsection{Target}
 
-Afin d'effectuer des mesures, le théodolite a besoin d'une cible.
-Ces cibles peuvent être de différent types.
-La plus commune est la cible sur papier réfléchissant (reflective foil).
-La figure ... en montre quelques exemples.
+In order to perform measurements, the theodolite needs a target.
+These targets can be of different types.
+The most common is the reflective foil target.
+The \autoref{fig:target_reflective} shows some examples.
 
-%%Figure cibles réfléchissantes
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Afin d'effectuer des mesures, le théodolite a besoin d'une cible.
+%Ces cibles peuvent être de différent types.
+%La plus commune est la cible sur papier réfléchissant (reflective foil).
+%La figure ... en montre quelques exemples.
 
-Ces cibles sont fournies avec le théodolite et peuvent être placé sur n'importe quels objets.
-Cependant le théodolite ne peut mesurer qu'une cible à la fois.
-Le théodolite ne fait pas de distinction entre ces différentes cibles réfléchissantes. 
-Ainsi, s'il en détecte une nouvelle à proximité d'une autre cible, il peut changer de cible à mesurer automatiquement.
-De plus, d'après la fiche technique de la section précédente les performances sont moindres avec ce type de cible (distance et précision réduites).
-C'est pourquoi on préférera plutôt les utiliser pour calibrer le théodolite sur des distances courtes, plutôt que de les utiliser pour des prises de mesures lointaine. 
+\begin{figure}[htb]
+	\centering
+	\includegraphics[width=0.3\textwidth]{./figs/Target.JPG}
+	\caption{Tablets which can be used with the Trimble.}
+	\label{fig:target_reflective}
+\end{figure}
 
-La cible que l'on va utilisé le plus souvent pour traquer notre plateforme robotique est un prisme, montré à la \autoref{fig:prism}.
+These targets are provided with the theodolite and can be placed on any object.
+However the theodolite can only measure one target at a time.
+Theodolite makes no distinction between these different reflective targets.
+Thus, if it detects a new target near another target, it can change the target to be measured automatically.
+Moreover, according to the data sheet of the previous section, the performance is lower with this type of target (reduced distance and precision).
+This is why we prefer to use them to calibrate theodolite over short distances, rather than to use them for distant measurements.
+
+The target that we will most often used to track our robotic platform is a prism, shown to \autoref{fig:prism}.
+
+%Ces cibles sont fournies avec le théodolite et peuvent être placé sur n'importe quels objets.
+%Cependant le théodolite ne peut mesurer qu'une cible à la fois.
+%Le théodolite ne fait pas de distinction entre ces différentes cibles réfléchissantes. 
+%Ainsi, s'il en détecte une nouvelle à proximité d'une autre cible, il peut changer de cible à mesurer automatiquement.
+%De plus, d'après la fiche technique de la section précédente les performances sont moindres avec ce type de cible (distance et précision réduites).
+%C'est pourquoi on préférera plutôt les utiliser pour calibrer le théodolite sur des distances courtes, plutôt que de les utiliser pour des prises de mesures lointaine. 
+%
+%La cible que l'on va utilisé le plus souvent pour traquer notre plateforme robotique est un prisme, montré à la \autoref{fig:prism}.
 
 \begin{figure}[htb]
 	\centering
@@ -143,30 +201,53 @@ La cible que l'on va utilisé le plus souvent pour traquer notre plateforme robo
 	\label{fig:prism}
 \end{figure}
 
-Ce prisme a de nombreux atout.
-Premièrement, il est possible de demander à un théodolite de se verrouiller sur celui-ci.
-Le théodolite ne changera pas de cible durant la prise de mesure.
-Le prisme contient une signature numérique unique qui garantie ce verrouillage.
-Cela permet de placer plusieurs prismes sur une même plateforme robotique tout en garantissant la bonne prise des mesures.
-De plus, les performances des mesures sont augmentées.
-Il est possible de suivre le prisme sur de plus longues distances avec une précisions accrues.
-Enfin, il est possible de le fixer solidement à une plateforme via une vis.
-Le prisme fonctionne avec une batterie qui permet d'activer sa signature électronique. 
-Il est possible de régler le numéro de cette signature (allant de 1 à 8) afin de le différencier d'autres prismes.
-Cette cible est assez lourde et onéreuse.
-Lors de son utilisation, il convient donc d'en prendre soin et de l'utiliser de manière sécuritaire pour éviter de l'endommager.
-Une notice papier est fourni avec l'équipement, illustrant son utilisation et les précautions à prendre.
+This prism has many assets.
+First, it is possible to ask a theodolite to lock onto it.
+Theodolite will not change target during measurement.
+The prism contains a unique digital signature that guarantees this lock.
+This makes it possible to place several prisms on the same robotic platform while guaranteeing the correct measurement.
+In addition, the performance of the measurements is increased.
+It is possible to follow the prism over longer distances with increased precision.
+Finally, it can be fixed securely to a platform via a screw.
+The prism works with a battery that activates its electronic signature. 
+It is possible to set the number of this signature (ranging from 1 to 8) to differentiate it from other prisms.
+This target is quite heavy and expensive.
+When used, it should be taken care of and used safely to avoid damage.
+A paper leaflet is provided with the equipment, illustrating its use and the precautions to be taken.
+
+%Ce prisme a de nombreux atout.
+%Premièrement, il est possible de demander à un théodolite de se verrouiller sur celui-ci.
+%Le théodolite ne changera pas de cible durant la prise de mesure.
+%Le prisme contient une signature numérique unique qui garantie ce verrouillage.
+%Cela permet de placer plusieurs prismes sur une même plateforme robotique tout en garantissant la bonne prise des mesures.
+%De plus, les performances des mesures sont augmentées.
+%Il est possible de suivre le prisme sur de plus longues distances avec une précisions accrues.
+%Enfin, il est possible de le fixer solidement à une plateforme via une vis.
+%Le prisme fonctionne avec une batterie qui permet d'activer sa signature électronique. 
+%Il est possible de régler le numéro de cette signature (allant de 1 à 8) afin de le différencier d'autres prismes.
+%Cette cible est assez lourde et onéreuse.
+%Lors de son utilisation, il convient donc d'en prendre soin et de l'utiliser de manière sécuritaire pour éviter de l'endommager.
+%Une notice papier est fourni avec l'équipement, illustrant son utilisation et les précautions à prendre.
 
 \subsection{Communication part}
 
-La communication des données vers une plateforme robotique devient difficile avec les équipements fournit avec le théodolite.
-L'USB ou le Bluetooth ne sont pas adapté, tandis que le relai n'est utilisable que sous l'application Trimble Access qui fonctionne sur Windows exclusivement.
-Nous avons décidé d'utiliser un autre module de communication pour résoudre ce problème.
-Il s'agit d'un module de communication par antenne LoRa sur un circuit imprimé que l'on peut configurer pour transmettre des données sur de longues portées.
-Ce module sera installé sur une carte Raspeberry Pi 3B+, qui recevra les données du théodolite par USB.
-La plateforme robotique sera équipée également d'une Raspberry Pi 3B+ et d'un module LoRa pour communiquer avec le théodolite, ce qui nous permettra de sauvegarder les données à distance.
+Communication of data to a robotic platform becomes difficult with the equipment supplied with the theodolite.
+The USB or Bluetooth is not suitable, while the relay is only usable under the Trimble Access application that works on Windows exclusively.
+We decided to use another communication module to solve this problem.
+It is a Lora antenna communication module on a printed circuit board that can be configured to transmit data over long ranges.
+This module will be installed on a Raspeberry Pi 3B+ board, which will receive the theodolite data via USB.
+The robotic platform will also be equipped with a Raspberry Pi 3B+ and a Lora module to communicate with the theodolite, which will allow us to save the data at distance.
 
-Le module LoRa est présenté à \autoref{fig:LORA}.
+The LoRa module is presented in \autoref{fig:LORA}.
+
+%La communication des données vers une plateforme robotique devient difficile avec les équipements fournit avec le théodolite.
+%L'USB ou le Bluetooth ne sont pas adapté, tandis que le relai n'est utilisable que sous l'application Trimble Access qui fonctionne sur Windows exclusivement.
+%Nous avons décidé d'utiliser un autre module de communication pour résoudre ce problème.
+%Il s'agit d'un module de communication par antenne LoRa sur un circuit imprimé que l'on peut configurer pour transmettre des données sur de longues portées.
+%Ce module sera installé sur une carte Raspeberry Pi 3B+, qui recevra les données du théodolite par USB.
+%La plateforme robotique sera équipée également d'une Raspberry Pi 3B+ et d'un module LoRa pour communiquer avec le théodolite, ce qui nous permettra de sauvegarder les données à distance.
+%
+%Le module LoRa est présenté à \autoref{fig:LORA}.
 
 \begin{figure}[htb]
 	\centering
@@ -175,15 +256,20 @@ Le module LoRa est présenté à \autoref{fig:LORA}.
 	\label{fig:LORA}
 \end{figure}
 
-\href{https://wiki.dragino.com/index.php?title=Lora/GPS_HAT}{Ce site internet} donne une vue d'ensemble des possibilités qu'offre ce module, ainsi que quelques exemples de codes pour certaines applications.
+\href{https://wiki.dragino.com/index.php?title=Lora/GPS_HAT}{This website} provides an overview of the possibilities offered by this module, as well as some code examples for some applications.
 
-Le document suivant \href{run:LoRa_GPS_HAT_manual.pdf}{LoRa GPS HAT Manual} donne des exemples plus détaillé d'utilisation, ainsi qu'un guide de démarrage pour celles-ci.
-Des informations complémentaires seront données dans la \autoref{ROS_node} et \autoref{Deployment}.
+The following document \href{run:Lora_gps_hat_manual.pdf}{Lora GPS HAT Manual} provides more detailed examples of use and a start guide for use.
+Additional information will be given in the \autoref{sec:ROS_node} and \autoref{sec:Deployment}.
+
+%\href{https://wiki.dragino.com/index.php?title=Lora/GPS_HAT}{Ce site internet} donne une vue d'ensemble des possibilités qu'offre ce module, ainsi que quelques exemples de codes pour certaines applications.
+%
+%Le document suivant \href{run:LoRa_GPS_HAT_manual.pdf}{LoRa GPS HAT Manual} donne des exemples plus détaillé d'utilisation, ainsi qu'un guide de démarrage pour celles-ci.
+%Des informations complémentaires seront données dans la \autoref{ROS_node} et \autoref{Deployment}.
 
 \subsection{Raspberry Pi 3B+}
 
 The computer currently used to interface with the theodolite is a Raspberry Pi 3 model B+ running Ubuntu Mate 18.04.2. 
-Using another computer and operating system should theoratically work, as long as the OS is a Linux distribution and as long as the computer has a 32-bit ARM based processor. 
+Using another computer and operating system should theoretically work, as long as the OS is a Linux distribution and as long as the computer has a 32-bit ARM based processor. 
 The only computers that have been tested are Raspberry Pi 3 model B/B+ and the only OS's that have been tested are Ubuntu Mate 18.04.2 and Raspbian 9.11 Stretch.
 
 The credentials for logging in the computer are the following:
@@ -193,18 +279,25 @@ The credentials for logging in the computer are the following:
     \item Password: macaroni
 \end{itemize}
 
-
 % -------------------------------------------------------------
 \section{Software}
 \label{sec:software}
 
-La configuration du théodolite peut se faire de deux manières différentes.
-La plus pratique et la plus rapide à mettre en œuvre consiste à utiliser l'application Trimble Access.
-Cette application est uniquement disponible sur Windows, mais permet d'utiliser toutes les fonctionnalités du théodolite assez rapidement.
-Le second moyen est d'utiliser des librairies C++ de code qui permettent de communiquer avec le théodolite.
-Ces librairies peuvent être utilisées sous Linux, mais ne contiennent pas toutes les fonctionnalités possibles sous Trimble Access.
-De plus il est difficile de mettre en œuvre celle-ci dans certains cas.
-Cette section présente ces différents moyens de configurer le théodolite.
+The configuration of the theodolite can be done in two different ways.
+The easiest and fastest to implement is using the Trimble Access application.
+This application is only available on Windows, but allows using all the functionalities of the theodolite quite quickly.
+The second way is to use C++ code libraries that allow communicating with the theodolite.
+These libraries can be used under Linux, but do not contain all the possible features under Trimble Access.
+Moreover, it is difficult to implement it in some cases.
+This section presents these different ways of configuring the theodolite.
+
+%La configuration du théodolite peut se faire de deux manières différentes.
+%La plus pratique et la plus rapide à mettre en œuvre consiste à utiliser l'application Trimble Access.
+%Cette application est uniquement disponible sur Windows, mais permet d'utiliser toutes les fonctionnalités du théodolite assez rapidement.
+%Le second moyen est d'utiliser des librairies C++ de code qui permettent de communiquer avec le théodolite.
+%Ces librairies peuvent être utilisées sous Linux, mais ne contiennent pas toutes les fonctionnalités possibles sous Trimble Access.
+%De plus il est difficile de mettre en œuvre celle-ci dans certains cas.
+%Cette section présente ces différents moyens de configurer le théodolite.
 
 \subsection{Trimble Access software (coming soon)}
 
@@ -213,34 +306,44 @@ Détailler et montrer les fonctionnalités les plus couramment utilisées
 
 \subsection{Compile library for linux}
 
-L'entreprise Cansel nous a fournit des librairies pré-compilées de code C++ permettant d'utiliser certaines fonctionnalités du théodolite sous Linux.
+The company Cansel has provided us a pre-completed libraries of C++ code to use some of the theodolite features on Linux.
 
 This repository is built upon a project that was intended to be used as a Telnet server for interfacing with a Trimble TotalStation robotic theodolite. 
-Its main program was modified heavily by removing the telnet server functionnality and replacing it with a sequence of simple commands that are sent to the theodolite. 
+Its main program was modified heavily by removing the telnet server functionality and replacing it with a sequence of simple commands that are sent to the theodolite. 
 This was done in order to test and explore what type of interfacing could be done with the theodolites we have at the lab, which are 3 Trimble TotalStation S7. 
 In other words, the main program now consists of a small sequence of commands that are sent to the theodolite before terminating.
 
-Dans le package theodolite\_node\_ROS, ces librairies se trouvent dans le répertoire $lib$.
-Les fichiers d'entêtes $.h$ qui utilisent ses librairies sont dans le répertoire $include$.
-Pour utiliser ces librairies pré-compilées, des fichiers $.cpp$ et $.h$ ont été créés dans le répertoire $src$.
-Ces fichiers sont issues d'un SDK fournit par Trimble.
-Nous détaillerons celui-ci dans les sous-sections à venir.
-Les fonctions définit dans ces fichiers seront explicités, principalement celles que nous utilisons pour obtenir les données du théodolite.
-Les deux principales classes que nous allons utiliser sont ObservationListener et SsiInstrument, présent dans le répertoire $src$.
+%L'entreprise Cansel nous a fournit des librairies pré-compilées de code C++ permettant d'utiliser certaines fonctionnalités du théodolite sous Linux.
+
+In the theodolite\_node\_ROS package, these libraries are in the $lib$ directory.
+The $.h$ header files that use its libraries are in the $include$ directory.
+To use these precompiled libraries, $.cpp$ and $.h$ files were created in the $src$ directory.
+These files are from an SDK provided by Trimble.
+We will detail this in future subsections.
+The functions defined in these files will be explained, mainly those we used to obtain the data of the theodolite.
+The two main classes that we will use are Observationlistener and Ssiinstrument, present in the $src$ directory.
+
+%Dans le package theodolite\_node\_ROS, ces librairies se trouvent dans le répertoire $lib$.
+%Les fichiers d'entêtes $.h$ qui utilisent ses librairies sont dans le répertoire $include$.
+%Pour utiliser ces librairies pré-compilées, des fichiers $.cpp$ et $.h$ ont été créés dans le répertoire $src$.
+%Ces fichiers sont issues d'un SDK fournit par Trimble.
+%Nous détaillerons celui-ci dans les sous-sections à venir.
+%Les fonctions définit dans ces fichiers seront explicités, principalement celles que nous utilisons pour obtenir les données du théodolite.
+%Les deux principales classes que nous allons utiliser sont ObservationListener et SsiInstrument, présent dans le répertoire $src$.
 
 \subsubsection{TPSDK}
 
-The main program can access the functionnalities of the theodolite through the use of the Trimble Precision SDK (TPSDK). 
-This SDK is provided by the manufacturer of the theodolite in order to allow the theodolite to be integrated into 3rd party software solution.
+The main program can access the functionalities of the theodolite through the use of the Trimble Precision SDK (TPSDK). 
+This SDK is provided by the manufacturer of the theodolite in order to allow the theodolite to be integrated into third party software solution.
 
 The SDK is made to be used with Win32 and Windows Mobile platforms. 
 However, this repo uses a special non-official precompiled version of this SDK that is meant to be used on a Raspberry Pi running Raspbian. 
-In our case, the SDK consists of .so library files and .h header files, that are located in the lib and include directories, respectively. 
+In our case, the SDK consists of .so library files and .h header files that are located in the lib and include directories, respectively. 
 The source code in this repo is written in C++. 
 The main program, which has dependencies to the SDK, has been compiled and used on a Raspberry Pi 3 model B+ running both Raspbian 9.11 Stretch and Ubuntu Mate 18.04.2.
 
-More detailed explanations and description of the SDK are available on the TPSDK website. 
-To sign in, click Sign In to Trimble Access and enter the following info:
+More detailed explanations and description of the SDK are available on the \href{run:https://www.myconnectedsite.com\/launcher\/?redir=\%2Fsite\%2Ftrimble-precision-sdk\%2FTrimblePrecisionSDK#login}{TPSDK website}. 
+To sign in, click Sign In in Trimble Access and enter the following info:
 
 \begin{itemize}
 	\item Username: ULaval
@@ -256,21 +359,21 @@ Also, since we are not sure about where our version of the SDK is situated in th
 
 \subsubsection{Communication}
 
-The Trimble TotalStation SSeries supports many type of communication channels, such as Bluetooth, radio, serial, USB, WiFi, etc. 
-However, we were not able able to connect the Raspberry Pi to the TotalStation S7 via Bluetooth or WiFi. 
+The Trimble TotalStation SSeries supports many types of communication channels, such as Bluetooth, radio, serial, USB, WiFi, etc. 
+However, we were not able to connect the Raspberry Pi to the TotalStation S7 via Bluetooth or WiFi. 
 The lab has in its possession three Trimble TDL2.4 data link radios, which connect to a computer via Bluetooth and connect to a theodolite via 2.4 GHz radio channel. 
-They could prove usefull for long distance communication between the Raspberry Pi and the theodolite, but we have not been able yet to connect them to a Raspberry Pi and use them. 
+They could prove useful for long-distance communication between the Raspberry Pi and the theodolite, but we have not been able yet to connect them to a Raspberry Pi and use them. 
 They currently only work with the tablet controller of the theodolite.
 
 This repo currently only supports communication between the Raspberry Pi and the theodolite via a USB and TCP connection. 
-The theodolite shows up in Linux as a USB device with idProduct: 0101, idVendor: 099e and Trimble as manufacturer. 
+The theodolite shows up in Linux as a USB device with idProduct: 0101, idVendor: 099e and Trimble as manufacturers. 
 A udev rule was created in Ubuntu Mate in order to give users access to the theodolite USB connection.
 Any user in the group users can run the program and communicate with the device. 
 The TCP connection that was already implemented has not been used or tested.
 
-Since the SDK was made to be used on Windows, the default classes for instanciating a communication channel with the theodolite don't work on Linux. 
+Since the SDK was made to be used on Windows, the default classes for instantiating a communication channel with the theodolite don't work on Linux. 
 The SDK supports custom communication type, as long as you define a custom communication class which inherits from ICommunicator and implements the methods defined in the ICommunicator interface.
-The classes USBCommunicator and TCPCommunicator are two implementation of this interface. They are used in the SsiInstrument class in the Connect method.
+The classes USBCommunicator and TCPCommunicator are two implementations of this interface. They are used in the SsiInstrument class in the Connect method.
 
 \subsubsection{SsiInstrument}
 
@@ -278,17 +381,17 @@ The class SsiInstrument represents the TotalStation theodolite at a high level o
 It implements methods that start specific tasks with a few number of parameters. 
 These methods handle the required sequence of function calls specific to the SDK.
 
-In order to use the features that are implemented in the SsiInstrument class and start interfacing with the theodolite, one must first instantiate an SsiInstrument object and load the appropriate driver. 
+In order to use the features that are implemented in the SsiInstrument class and start interfacing with the theodolite, one must first instantiate a SsiInstrument object and load the appropriate driver. 
 The default loaded driver is a driver for the TotalStation SSeries theodolites. 
 The method to call is SsiInstrument::LoadDriver. 
-It essentially instantiates the appropriate device driver from its DriverManager attribute, which is instantiated in the initialisation list in the constructor of the class. 
+It essentially instantiates the appropriate device driver from its DriverManager attribute, which is instantiated in the initialization list in the constructor of the class. 
 The driver is an SSI::IDriver object that is kept as an attribute of the class.
 
 When the driver is loaded, the SsiInstrument::Connect should be called in order to establish a connection to the device. 
 Two parameters can be passed to this function: const char* sType and const char* sPort. 
 The sType parameter specifies the type of communication channel to use. 
 The following types can be specified: "usb", "tcp" and "int". 
-The USB and TCP types use the previously mentionned implementations of the ICommunicator interface: USBCommunicator and TCPCommunicator. 
+The USB and TCP types use the previously mentioned implementations of the ICommunicator interface: USBCommunicator and TCPCommunicator. 
 USBCommunicator uses the external library libusb-1.0 to connect to the device. 
 The int type of connection stands for internal. 
 It is not clear what this type of connection means and connecting to the device with this type of connection hasn't been tested. 
@@ -300,30 +403,46 @@ The SsiInstrument::Connect method instantiates a SSI::ISensor object and keeps i
 Once the driver is loaded and the device is connected, the user can now call functions to interface with the device. 
 Basic features such as starting video streaming, taking measures, tracking targets and setting the servos angles have been implemented.
 
-In order to access an intrument feature, the SSI::ISensor::getInterface method of the SSI::ISensor object (\_pSensor attribute) has to be called while passing it the interface of the feature you want to access. 
+In order to access an instrument feature, the SSI::ISensor::getInterface method of the SSI::ISensor object (\_pSensor attribute) has to be called while passing it the interface of the feature you want to access. 
 Once you have the interface, you can call the methods defined by the interface to start interacting with the device. 
 Documentation for the interfaces is available on the TPSDK website.
 
-Plusieurs mode de tracking sont définis dans la classe SsiInstrument. 
-Il s'agit des modes: MODE\_PRISM, MODE\_AUTOLOCK, MODE\_DR, MODE\_DR\_LASER et MODE\_MULTITRACK.
-MODE\_PRISM permet de trouver un prisme pour effectuer une mesure par la suite.
-MODE\_AUTOLOCK fait en sorte que le théodolite se verrouille sur une cible dès qu'il la trouve, et peut changer de cible s'il en trouve une autre. 
-C'est un mode de suivi sans prise de mesure.
-MODE\_DR permet de ce verrouiller sur une cible et d'effectuer une mesure uniquement.
-MODE\_DR\_LASER effectue la même tâche que MODE\_DR, mais en plus un puissant rayon laser est utilisé afin de visualiser la zone de prise de mesure.
-Enfin, MODE\_MULTITRACK permet au théodolite de se verrouiller sur un prisme et d'effectuer un suivi de celui-ci tout en prenant des mesures à une fréquence pré-défini.
-C'est ce mode que nous allons utiliser pour prendre des références de trajectoires.
+Several tracking modes are defined in the SsiInstrument class.
+These are: PRISM MODE, AUTOLOCK MODE, DR MODE, DR LASER MODE and MULTITRACK MODE.
+PRISM MODE allows you to find a prism to make a measurement afterwards.
+AUTOLOCK MODE ensures that the theodolite locks on to a target as soon as it finds it, and can change target if it finds another one.
+It is a tracking mode without measurement.
+DR MODE allows you to lock on a target and perform a measurement only.
+DR LASER MODE performs the same task as DR MODE, but in addition a powerful laser beam is used to visualize the measurement area.
+Finally, MULTITRACK MODE allows the theodolite to lock onto a prism and track it while taking measurements at a predefined frequency.
+It is this mode that we will use to take trajectory references.
 
-Pour activer un mode, on utilise la fonction $Target$.
-Cette fonction prend en entrée le mode choisit, ainsi que le numéro de la cible qui est dans notre cas le numéro du prisme que l'on a sélectionné.
-Par la suite, le tracking est activé par la fonction $Tracking$ qui prend en argument l'information démarré/arrêté, et un objet de la classe ObservationListener pour sauvegarder les données de positionnement.
-Une fois le tracking activé, les données reçues sont automatiquement stockées dans cette classe.
-Pour y avoir accès, il suffit d'utiliser les fonctions de la classe ObservationListener.
+%Plusieurs mode de tracking sont définis dans la classe SsiInstrument. 
+%Il s'agit des modes: MODE\_PRISM, MODE\_AUTOLOCK, MODE\_DR, MODE\_DR\_LASER et MODE\_MULTITRACK.
+%MODE\_PRISM permet de trouver un prisme pour effectuer une mesure par la suite.
+%MODE\_AUTOLOCK fait en sorte que le théodolite se verrouille sur une cible dès qu'il la trouve, et peut changer de cible s'il en trouve une autre. 
+%C'est un mode de suivi sans prise de mesure.
+%MODE\_DR permet de ce verrouiller sur une cible et d'effectuer une mesure uniquement.
+%MODE\_DR\_LASER effectue la même tâche que MODE\_DR, mais en plus un puissant rayon laser est utilisé afin de visualiser la zone de prise de mesure.
+%Enfin, MODE\_MULTITRACK permet au théodolite de se verrouiller sur un prisme et d'effectuer un suivi de celui-ci tout en prenant des mesures à une fréquence pré-défini.
+%C'est ce mode que nous allons utiliser pour prendre des références de trajectoires.
+
+To activate a mode, we use the $Target$ function.
+This function takes as input the mode chosen, as well as the number of the target which is in our case the number of the prism that we have selected.
+Subsequently, tracking is activated by the $Tracking$ function which takes as an argument the information started/stopped, and an object of the Observationlistener class to save the positioning data.
+Once tracking is enabled, the received data is automatically stored in this class.
+To access it, just use the functions of the Observationlistener class.
+
+%Pour activer un mode, on utilise la fonction $Target$.
+%Cette fonction prend en entrée le mode choisit, ainsi que le numéro de la cible qui est dans notre cas le numéro du prisme que l'on a sélectionné.
+%Par la suite, le tracking est activé par la fonction $Tracking$ qui prend en argument l'information démarré/arrêté, et un objet de la classe ObservationListener pour sauvegarder les données de positionnement.
+%Une fois le tracking activé, les données reçues sont automatiquement stockées dans cette classe.
+%Pour y avoir accès, il suffit d'utiliser les fonctions de la classe ObservationListener.
 
 \subsubsection{ObservationListener}
 
 This class is one of the most important for our usage.
-It define a vector element which will contain all the data gather.
+It defines a vector element which will contain all the data gather.
 This vector is named $observations$, and his size is defined as $size_vector$.
 The function $getObservations$ and $getSizeVector$ will be used several times to have access to the data.
 
@@ -331,157 +450,269 @@ The index of the vector $observations$ is defined by an enumeration list.
 Five topics are listed: HORIZONTAL\_ANGLE\_VECTOR, VERTICAL\_ANGLE\_VECTOR, DISTANCE\_VECTOR, TIMESTAMP\_VECTOR and ERROR.
 These topics are updated in the function $observationTracked$.
 This function monitors an event of the theodolite and save the data received.
-The two first one are the data of horizontale angle and verticale angle of the trimble.
-These data are expressed in arc-second unit, cast into a double for an easier storage.
-The DISTANCE\_VECTOR expresses the distance of the measurments in meter.
-If the target is not detected or too close to the trimble, the value will be zero.
+The first two ones are the data of horizontal angle and vertical angle of the theodolite.
+These data are expressed in arcsecond units, cast into a double for an easier storage.
+The DISTANCE\_VECTOR expresses the distance of the measurements in meter.
+If the target is not detected or too close to the theodolite, the value will be zero.
 The timestamps are stored in TIMESTAMP\_VECTOR.
 These data used UTC time as timestamps, so it will be the clock of the computer.
-The time is expresses as a double.
-The frequency of the measurement will depend of the configuration choose for the tracking.
+The time is expressed as a double.
+The frequency of the measurement will depend on the configuration choose for the tracking.
 Finally, ERROR is a flag which will tell the user if there are some issues to collect the data.
-The different flags are presented is the Table ...
+The different flags are presented is the \autoref{table:flag}.
 
-%%Table flag
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{table}[htbp]
+        \centering
+        \caption{Flag error which can occur during a tracking.} 
+        \begin{tabu}{@{}X[c]X[c]X[c]X[c]@{}}
+		\toprule
+        \textbf{Flag Number} & \textbf{Meaning} & \textbf{Causes} & \textbf{Effect}\\
+		\midrule
+        0 &  No error occur &  Good trackig & Data save correctly\\
+        1 &  TiltOutOfRange &  Theodolite not balanced & No data saved\\  
+        2 &  WrongTargetDistance &  Issue with the target & No data saved\\  
+        3 &  Unknown &  Unknow issue & No data saved\\  
+        4 &  Tracking issues &  Target too close or not detected & No data saved\\  
+		\bottomrule
+        \end{tabu}
+        \label{table:flag}
+\end{table}
 
-If the user choose a finite number of measurements, he can use the function $saveFile$ to store the data in a CSV file.
+If the user chooses a finite number of measurements, he can use the function $saveFile$ to store the data in a CSV file.
 
 \subsubsection{Others class functions}
 
-Les autres classes présent dans le répertoire $src$ ne sont pas utilisées actuellement, ou permettent de faire appliquer les fonctions des deux classes précédentes.
-Il s'agit de SsiCallbacks, SsiCommand, TCPCommunicator, TCPServer, USBCommunicator et
+The other classes in the $src$ directory are not currently used, or allow the functions of the two previous classes to be applied.
+These are SsiCallbacks, SsiCommand, TCPCommunicator, TCPServer, USBCommunicator and
 VideoStreamingListener.
-SsiCallbacks possèdent des fonctions qui permettent l'état de certaines configurations.
-Par exemple l'on peut demander à connaître le tilt du théodolite ou si le tracking est toujours en cours.
-SsiCommand est une classe qui permet d'envoyer les commandes demandées au théodolite (par exemple $connect$ ou $target$ entre-autres).
-TCPCommunicator et TCPServer sont des classes qui nous autorisent à communiquer avec le théodolite par liaison TCP.
-Nous ne les utiliserons pas dans ce projet.
-USBCommunicator nous permet de communiquer par USB avec le théodolite.
-Enfin, VideoStreamingListener est une classe qui possèdent des fonctions pouvant utiliser la caméra du théodolite.
-Nous ne l'utiliserons pas également dans ce projet.
+SsiCallbacks have functions that allow the status of certain configurations.
+For example, we can ask to know the tilt of the theodolite or if the tracking is still in progress.
+SsiCommand is a class that sends the commands requested to the theodolite (for example $connect$ or $target$ among others).
+TCPCommunicator and TCPServer are classes that allow us to communicate with the theodolite via TCP links.
+We will not use them in this project.
+USBCommunicator allows us to communicate by USB with the theodolite.
+Finally, VideoStreamingListener is a class that has functions that can use the theodolite camera.
+We will not use it in this project as well.
+
+%Les autres classes présent dans le répertoire $src$ ne sont pas utilisées actuellement, ou permettent de faire appliquer les fonctions des deux classes précédentes.
+%Il s'agit de SsiCallbacks, SsiCommand, TCPCommunicator, TCPServer, USBCommunicator et
+%VideoStreamingListener.
+%SsiCallbacks possèdent des fonctions qui permettent l'état de certaines configurations.
+%Par exemple l'on peut demander à connaître le tilt du théodolite ou si le tracking est toujours en cours.
+%SsiCommand est une classe qui permet d'envoyer les commandes demandées au théodolite (par exemple $connect$ ou $target$ entre-autres).
+%TCPCommunicator et TCPServer sont des classes qui nous autorisent à communiquer avec le théodolite par liaison TCP.
+%Nous ne les utiliserons pas dans ce projet.
+%USBCommunicator nous permet de communiquer par USB avec le théodolite.
+%Enfin, VideoStreamingListener est une classe qui possèdent des fonctions pouvant utiliser la caméra du théodolite.
+%Nous ne l'utiliserons pas également dans ce projet.
 
 \subsubsection{Remark}
 
-L'utilisation de la librairie C++ ne peut pas se faire en même temps que l'utilisation du logiciel Trimble Access.
-EN effet, dès que l'un ou l'autre des logiciels est démarré, le port USB est occupé et ne peut pas se connecter à d'autres programme pour recevoir des informations autres que celles demandées par le logiciel utilisé.
-De ce fait, il convient d'utiliser dans un premier le logiciel Trimble Access pour calibrer et configurer la plateforme comme on le souhaite.
-Par la suite, le programme sous linux nous fournira les données acquissent.
+The C++ library cannot be used at the same time as the Trimble Access software.
+Indeed, as soon as one or the other of the software is started, the USB port is busy and cannot connect to other programs to receive information other than those requested by the software used.
+Therefore, the Trimble Access software should be used in the first instance to calibrate and configure the platform as desired.
+Subsequently, the program under linux will provide us with the data acquires.
 
 Some features require receiving data asynchronously from the device. 
 Methods like SsiInstrument::Video and SsiInstrument::Tracking require passing listeners that are classes that inherit and implement specific interfaces. 
 For example, in order to access the video streaming frames and the streaming states when calling the SsiInstrument::Video method, one has to pass an object that implements SSI::IVideoStreamingUpdateListener and SSI::IStreamingStateChangedListener. 
 The methods defined by these interfaces are called whenever an event happens. 
-Data is accessible in an event object (such as SSI::VideoStreamingUpdateEvent) that is passed as parameter in the callbacks defined in the interface.
+Data is accessible in an event object (such as SSI::VideoStreamingUpdateEvent) that is passed as a parameter in the callbacks defined in the interface.
 
-In our case, two listeners have been developped in order to be able to access tracking measures and video streaming frames. 
-These listener are ObservationListener and VideoStreamingListener respectively. 
+In our case, two listeners have been developed in order to be able to access tracking measures and video streaming frames. 
+These listeners are ObservationListener and VideoStreamingListener respectively. 
 All they currently do is store the current image or store the received measurements in a vector. 
 It is also possible to save the received measurements to a .csv file.
 Initially, the repo came with the SsiCallbacks class. 
-This class implemented some listeners that were usefull with the Telnet server that was implemented.
-All of these library are compiled under ROS to parameter the code we want to use.
-The next section is about two nodes we have made: one to send the data through LoRa antenna, and one to receive these data again through LoRa antenna.
+This class implemented some listeners that were useful with the Telnet server that was implemented.
+All of these libraries are compiled under ROS to tune the code we want to use.
+The next section is about two nodes we have made: one to send the data through LoRa antennas, and one to receive these data again through LoRa antennas.
+
+%L'utilisation de la librairie C++ ne peut pas se faire en même temps que l'utilisation du logiciel Trimble Access.
+%EN effet, dès que l'un ou l'autre des logiciels est démarré, le port USB est occupé et ne peut pas se connecter à d'autres programme pour recevoir des informations autres que celles demandées par le logiciel utilisé.
+%De ce fait, il convient d'utiliser dans un premier le logiciel Trimble Access pour calibrer et configurer la plateforme comme on le souhaite.
+%Par la suite, le programme sous linux nous fournira les données acquissent.
 
 % -------------------------------------------------------------
 \section{ROS node}
-\label{ROS_node}
+\label{sec:ROS_node}
 
-ROS (Robot Operating System) est très utilisé en robotique.
-C'est une méta-librairies qui contient des packages de code pouvant être utilisés sur différentes plateformes, principalement sous Linux.
-Cette librairie permet de lancer des nœuds de code pouvant communiquer des informations entre eux à travers des publisher et subscriber.
-Afin de pouvoir paramétrer plus facilement notre code pour récupérer les données du théodolite, nous utiliserons un nœud de ROS qui aura pour but d'envoyer les données via les antennes LoRa, et un autre nœud de ROS qui les réceptionnera pour les enregistrer sur la plateforme robotique.
-Cette section décrira le fonctionnement de ces deux nœuds.
-Le package qui contient ces deux nœuds est nommé theodolite\_node\_ROS.
+ROS (Robot Operating System) is widely used in robotics.
+It is a meta-library that contains code packages that can be used on different platforms, mainly under Linux.
+This library allows launching code nodes that can communicate information between them through publisher and subscriber.
+In order to be able to more easily configure our code to recover the data from the theodolite, we will use a ROS node which will aim to send the data via the Lora antennas, and another ROS node that will receive them and record them on the robotic platform.
+This section will describe how these two nodes work.
+The package that contains these two nodes is named theodolite\_node\_ROS.
+
+%ROS (Robot Operating System) est très utilisé en robotique.
+%C'est une méta-librairies qui contient des packages de code pouvant être utilisés sur différentes plateformes, principalement sous Linux.
+%Cette librairie permet de lancer des nœuds de code pouvant communiquer des informations entre eux à travers des publisher et subscriber.
+%Afin de pouvoir paramétrer plus facilement notre code pour récupérer les données du théodolite, nous utiliserons un nœud de ROS qui aura pour but d'envoyer les données via les antennes LoRa, et un autre nœud de ROS qui les réceptionnera pour les enregistrer sur la plateforme robotique.
+%Cette section décrira le fonctionnement de ces deux nœuds.
+%Le package qui contient ces deux nœuds est nommé theodolite\_node\_ROS.
 
 \subsection{Acquisition of data and sender}
 
-Dans le package theodolite\_node\_ROS et dans le répertoire $src$, se situe le nœud de ROS qui permet d'envoyer les données du théodolite vers l'antenne LoRa réceptrice.
-Le fichier correspondant est nommé $theodolite_node.cpp$.
-Les différents paramètres de la communication avec l'antenne LoRa ainsi que les fonctions utilisées avec celle-ci sont définies juste avant la principale fonction $main$.
-Cette fonction $main$ se compose d'une boucle while qui effectuera plusieurs tâche à la suite.
+In the theodolite\_node\_ROS package and in the $src$ directory, there is the ROS node that sends the data from the theodolite to the receiving Lora antennas.
+The corresponding file is named $theodolite\_node.cpp$.
+The different parameters of the communication with the Lora antennas as well as the functions used with it are defined just before the main function $main$.
+This $main$ function consists of a while loop that will perform several tasks in a row.
 
-Tout d'abord on récupère les paramètres de la configuration que l'on souhaite.
-Ces paramètres sont définis dans le launchfile $theodolite\_node.launch$ présent dans le répertoire $launch$ du package.
-Six paramètres peuvent être définit.
-Il faut dans une premier renseigner le numéro du théodolite ($theodolite\_number$) que l'on souhaite utiliser.
-Ce numéro, c'est nous qui le choisissons.
-Il doit être différent des autres théodolites utilisés s'il y en a plusieurs.
-Ce numéro servira à trier les données récoltées, notamment dans le cas où plusieurs théodolite track la même cible.
-Le numéro doit être compris entre 1 et 8 inclus.
-Ensuite il faut donner le numéro du prisme que l'on souhaite traquer, $target\_prism$.
-Ce numéro servira également lors du tri des données.
-Le troisième paramètre, $number\_of\_measurments$, à renseigner est le nombre de mesures que l'on souhaite effectuer.
-Si l'on veut faire une prise de mesure continue dans le temps, on doit mettre la valeur de 0.
-Le programme ira alors chercher les données à chaque fois qu'une nouvelle apparaît.
-L'utilisateur devra alors fermer le noeud manuellement via le terminal.
-Le paramètre $use\_lora$ indique au programme si l'on veut envoyer les données via les antennes LoRa.
-Le paramètre $show\_data$ peut être utilisé pour debugger en affichant les données reçues du théodolite sur le terminal.
-Enfin, il est possible de sauvegarder un nombre de donnée finis grâce aux paramètres $save\_measurements$ et $file\_measurements$, qui indiquent respectivement si l'on veut sauvegarder les données ainsi que le nom du fichier si c'est le cas.
-Il est à noté que pour sauvegarder des données, le paramètre $number\_of\_measurments$ doit être différent de 0.
-De plus, seul le format $.csv$ est utilisé.
+First we get the settings of the configuration we want.
+These parameters are defined in the launchfile $theodolite\_node.launch$ present in the $launch$ directory of the package.
+Six parameters can be defined.
+The number of the theodolite ($theodolite\_number$) you wish to use must be entered in a first one.
+We pick this number.
+It must be different from the other theodolites used if there are several.
+This issue will be used to sort the collected data, especially in the case where several theodolite track the same target.
+The number must be between 1 and 8 inclusively.
+Then you have to give the number of the prism you want to track, $target\_prism$.
+This number will also be used to sort the data.
+The third parameter, $number\_of\_measurments$, to be filled in is the number of measurements you want to perform.
+If you want to make a continuous measurement over time, you have to set the value to 0.
+The program will then search for the data each time a new one appears.
+The user will then have to manually close the node via the terminal.
+The $use\_lora$ parameter tells the program if you want to send the data via the Lora antennas.
+The $show\_data$ parameter can be used to debugger by displaying the data received from the theodolite on the terminal.
+Finally, it is possible to save a finite number of data using the $save\_measurements$ and $file\_measurements$ parameters, which indicate if you want to save the data and the file name, respectively.
+Note that to save data, the $number\_of\_measurments$ parameters must be different from 0.
+In addition, only $.csv$ is used.
 
-Le code exécute par la suite les fonctions d'initialisation de l'antenne LoRa si l'option est activée.
-Un contrôle des valeurs des paramètres est ensuite effectué pour s'assurer qu'il n'y a pas d'erreurs.
-Les drivers du théodolite sont ensuite chargés avec la fonction $LoadDriver$, et la connexion est activée par la fonction $Connect$.
-S'il n'y a pas d'erreur à ce niveau, on donne le mode de tracking au théodolite via la fonction $Target$.
-Ensuite on définit notre vector $observation_listener$ qui contiendra les données reçues du théodolite.
-Le tracking avec la prise de données débute avec l'appel de la fonction $Tracking$.
-Le code se divise en deux parties: une partie pour la prise de mesure en continue, et une autre qui effectue un nombre donné de mesures.
+The code then executes the LoRa antenna initialization functions if the option is enabled.
+A check of the parameter values is then performed to ensure that there are no errors.
+Theodolite drivers are then loaded with the $LoadDriver$ function, and the connection is activated by the $Connect$ function.
+If there is no error at this level, we give the tracking mode to the theodolite via the $Target$ function.
+Then we define our vector $observation\_listener$ which will contain the data received from the theodolite.
+The tracking with the data takes starts with the call of the $Tracking$ function.
+The code is divided into two parts: one for continuous measurement, and another for a given number of measurements.
 
-Si la prise de mesure est continue, on utilise une boucle while sans fin afin d'acquérir les données.
-Le nombre de données dans notre vector $observation_listener$ est alors contrôlé régulièrement afin de détecter si de nouvelles valeurs ont été enregistrées.
-Une pause de 30 millisecondes est effectuée entre chaque contrôle afin de laisser le temps au programme de se mettre à jour.
-Ce délai est plus petit que la fréquence maximale théorique à laquelle le théodolite peut transmettre des données (20Hz).
-De ce fait, le programme ne manquera pas de nouvelles données.
-Lors de la détection de nouvelles données, celles-ci sont accessible via notre vector.
-Lorsque l'option $show\_data$ est activée, les valeurs sont affichées sur le terminal.
-SI $use\_lora$ est activé, les données sont castées dans une variable de type string, puis envoyé byte par byte à l'antenne LoRa qui les diffusera.
-Pour une prise de mesure finie, la même procédure est appliqué, si ce n'est que la boucle while se termine quand le nombre de mesures voulue est atteint.
-Après que ce nombre soit atteint, le programme sauvegarde les données si l'utilisateur a activé l'option, puis le nœud de ROS se déconnecte du théodolite avec la fonction $FreeDriver$.
+If the measurement is continuous, an endless while loop is used to acquire the data.
+The number of data in our $observation\_listener$ vector is then checked regularly to detect if new values have been recorded.
+A 30 millisecond pause is taken between each check to allow time for the program to update.
+This delay is smaller than the theoretical maximum frequency at which the theodolite can transmit data (20Hz).
+As a result, the program will not lack new data.
+When new data are detected, they are accessible via our vector.
+When $show\_data$ is enabled, the values are displayed on the terminal.
+If $use\_lora$ is enabled, the data is cast into a string variable, and sent byte by byte to the LoRa antennas, which will broadcast it.
+For a finished measurement, the same procedure is applied, except that the while loop ends when the desired number of measurements is reached.
+After this number is reached, the program saves the data if the user has enabled the option, then the ROS node logs out of the theodolite with the $Freedriver$ function.
 
-Il y a 7 données qui sont envoyées lors de la communication avec la plateforme robotique.
-La première valeur est le numéro du théodolite, suivi par le numéro du prisme afin de différentier plus type de mesure entre-elles.
-Ensuite les mesures angulaires sont envoyées: l'angle horizontale et l'angle verticale.
-La distance par rapport au prisme est la 5ème donnée envoyée, suivi du timestamp des mesures angulaires et de la distance.
-Enfin, un flag des erreurs définit à la \autoref{sec:software} est envoyé en dernier dans la chaîne de caractère.
+There are seven data that are sent during communication with the robotic platform.
+The first value is the theodolite number, followed by the prism number in order to differentiate more type of measurement between them.
+Then the angular measurements are sent: the horizontal angle and the vertical angle.
+The distance from the prism is the fifth data sent, followed by the timestamp of the angular measurements and distance.
+Finally, an error flag set to \autoref{sec:software} is sent last in the character string.
 
-IL est possible que des erreurs de connexion ou autres se produisent durant le déroulement du programme.
-La \autoref{sec:issue} y est consacrée, et apporte des solutions pour résoudre les problèmes survenus.
-Maintenant que nous pouvons envoyer les données, le code pour les recevoir est décrit dans la sous-section suivante.
+It is possible that connection or other errors occur during the running of the program.
+The \autoref{sec:issue} is dedicated to this, and provides solutions to solve the problems that have arisen.
+Now that we can send the data, the code to receive it is described in the next subsection.
+
+%Dans le package theodolite\_node\_ROS et dans le répertoire $src$, se situe le nœud de ROS qui permet d'envoyer les données du théodolite vers l'antenne LoRa réceptrice.
+%Le fichier correspondant est nommé $theodolite_node.cpp$.
+%Les différents paramètres de la communication avec l'antenne LoRa ainsi que les fonctions utilisées avec celle-ci sont définies juste avant la principale fonction $main$.
+%Cette fonction $main$ se compose d'une boucle while qui effectuera plusieurs tâche à la suite.
+%
+%Tout d'abord on récupère les paramètres de la configuration que l'on souhaite.
+%Ces paramètres sont définis dans le launchfile $theodolite\_node.launch$ présent dans le répertoire $launch$ du package.
+%Six paramètres peuvent être définit.
+%Il faut dans une premier renseigner le numéro du théodolite ($theodolite\_number$) que l'on souhaite utiliser.
+%Ce numéro, c'est nous qui le choisissons.
+%Il doit être différent des autres théodolites utilisés s'il y en a plusieurs.
+%Ce numéro servira à trier les données récoltées, notamment dans le cas où plusieurs théodolite track la même cible.
+%Le numéro doit être compris entre 1 et 8 inclus.
+%Ensuite il faut donner le numéro du prisme que l'on souhaite traquer, $target\_prism$.
+%Ce numéro servira également lors du tri des données.
+%Le troisième paramètre, $number\_of\_measurments$, à renseigner est le nombre de mesures que l'on souhaite effectuer.
+%Si l'on veut faire une prise de mesure continue dans le temps, on doit mettre la valeur de 0.
+%Le programme ira alors chercher les données à chaque fois qu'une nouvelle apparaît.
+%L'utilisateur devra alors fermer le noeud manuellement via le terminal.
+%Le paramètre $use\_lora$ indique au programme si l'on veut envoyer les données via les antennes LoRa.
+%Le paramètre $show\_data$ peut être utilisé pour debugger en affichant les données reçues du théodolite sur le terminal.
+%Enfin, il est possible de sauvegarder un nombre de donnée finis grâce aux paramètres $save\_measurements$ et $file\_measurements$, qui indiquent respectivement si l'on veut sauvegarder les données ainsi que le nom du fichier si c'est le cas.
+%Il est à noté que pour sauvegarder des données, le paramètre $number\_of\_measurments$ doit être différent de 0.
+%De plus, seul le format $.csv$ est utilisé.
+
+%Le code exécute par la suite les fonctions d'initialisation de l'antenne LoRa si l'option est activée.
+%Un contrôle des valeurs des paramètres est ensuite effectué pour s'assurer qu'il n'y a pas d'erreurs.
+%Les drivers du théodolite sont ensuite chargés avec la fonction $LoadDriver$, et la connexion est activée par la fonction $Connect$.
+%S'il n'y a pas d'erreur à ce niveau, on donne le mode de tracking au théodolite via la fonction $Target$.
+%Ensuite on définit notre vector $observation_listener$ qui contiendra les données reçues du théodolite.
+%Le tracking avec la prise de données débute avec l'appel de la fonction $Tracking$.
+%Le code se divise en deux parties: une partie pour la prise de mesure en continue, et une autre qui effectue un nombre donné de mesures.
+
+%Si la prise de mesure est continue, on utilise une boucle while sans fin afin d'acquérir les données.
+%Le nombre de données dans notre vector $observation_listener$ est alors contrôlé régulièrement afin de détecter si de nouvelles valeurs ont été enregistrées.
+%Une pause de 30 millisecondes est effectuée entre chaque contrôle afin de laisser le temps au programme de se mettre à jour.
+%Ce délai est plus petit que la fréquence maximale théorique à laquelle le théodolite peut transmettre des données (20Hz).
+%De ce fait, le programme ne manquera pas de nouvelles données.
+%Lors de la détection de nouvelles données, celles-ci sont accessible via notre vector.
+%Lorsque l'option $show\_data$ est activée, les valeurs sont affichées sur le terminal.
+%Si $use\_lora$ est activé, les données sont castées dans une variable de type string, puis envoyé byte par byte à l'antenne LoRa qui les diffusera.
+%Pour une prise de mesure finie, la même procédure est appliqué, si ce n'est que la boucle while se termine quand le nombre de mesures voulue est atteint.
+%Après que ce nombre soit atteint, le programme sauvegarde les données si l'utilisateur a activé l'option, puis le nœud de ROS se déconnecte du théodolite avec la fonction $FreeDriver$.
+
+%Il y a 7 données qui sont envoyées lors de la communication avec la plateforme robotique.
+%La première valeur est le numéro du théodolite, suivi par le numéro du prisme afin de différentier plus type de mesure entre-elles.
+%Ensuite les mesures angulaires sont envoyées: l'angle horizontale et l'angle verticale.
+%La distance par rapport au prisme est la 5ème donnée envoyée, suivi du timestamp des mesures angulaires et de la distance.
+%Enfin, un flag des erreurs définit à la \autoref{sec:software} est envoyé en dernier dans la chaîne de caractère.
+
+%Il est possible que des erreurs de connexion ou autres se produisent durant le déroulement du programme.
+%La \autoref{sec:issue} y est consacrée, et apporte des solutions pour résoudre les problèmes survenus.
+%Maintenant que nous pouvons envoyer les données, le code pour les recevoir est décrit dans la sous-section suivante.
 
 \subsection{Receiver}
 
-Comme le précédent noeud de ROS, le noeud d'écoute des données se situe dans le package theodolite\_node\_ROS et dans le répertoire $src$.
-Le fichier correspondant est nommé $theodolite\_listener.cpp$.
-Les différents paramètres de la communication avec l'antenne LoRa ainsi que les fonctions utilisées avec celle-ci sont définies juste avant la principale fonction $main$.
-Cette fonction $main$ se compose également d'une boucle while qui effectuera plusieurs tâche à la suite.
+Like the previous ROS node, the data listening node is located in the theodolite\_node\_ROS package and in the $src$ directory.
+The corresponding file is named $theodolite\_listener.cpp$.
+The different parameters of the communication with the Lora antenna as well as the functions used with it are defined just before the main function $main$.
+This $main$ function also consists of a while loop that will perform several tasks as a result.
 
-Tout d'abord on récupère les paramètres de la configuration que l'on souhaite.
-Ces paramètres sont définis dans le launchfile $theodolite\_listener.launch$ présent dans le répertoire $launch$ du package.
-Deux paramètres y sont utilisés.
-Le premier paramètres, $rate$, sert à définir la fréquence de l'écoute de la réception des messages.
-Le second paramètre $show\_data$ sert à afficher les données reçues sur un terminal afin de debugger ou vérifier que la communication fonctionne correctement.
-Une fois que les paramètres ont été définit, l'antenne LoRa est configuré comme pour le code de l'émetteur.
-La différence est que l'on utilise une boucle while sans fin, dans le but d'écouter en tout temps la réception d'un message à la fréquence définie par l'utilisateur.
+First we get the settings of the configuration we want.
+These parameters are defined in the launchfile $theodolite\_listener.launch$ present in the $launch$ directory of the package.
+Two parameters are used.
+The first parameter $rate$ is used to define the frequency of the reception of messages.
+The second parameter $show\_data$ is used to display data received on a terminal to debug or verify that the communication is working properly.
+Once the parameters have been set, the Lora antenna is configured as for the transmitter code.
+The difference is that we use an endless while loop, in order to listen at all times to the reception of a message at the frequency defined by the user.
 
-Cette boucle while sans fin exécute la fonction $receivepacket$, fonction qui va lire les bytes reçus et les convertir au format double.
-Les données reçues sont ensuite sauvegarder dans un vector qui sera transmit sur ROS pour un publisher nommé $data\_publish$.
-Par la suite, il suffit de sauvegarder ces données dans un rosbag pour pouvoir les utiliser en post-traitement.
-Il est à noté que ce publisher n'utilise pas de timestamp de ROS.
-En effet, il est trop compliqué de synchroniser les données issues du théodolite avec l'horloge de ROS en temps réel.
-Cette synchronisation devra se faire en post-traitement.
-De plus, ce code ne fonctionne pour le moment que pour une seule communication émetteur-récepteur.
-Des tests devront être effectués pour le valider avec plusieurs émetteurs vers un récepteur.
+This endless while loop runs the $receivepacket$ function, which will read the received bytes and convert them to double format.
+The data received is then saved in a vector that will be transmitted to ROS for a publisher named $data\_publish$.
+Afterwards, it is enough to save these data in a rosbag to be able to use them in post-processing.
+It should be noted that this publisher does not use ROS timestamp.
+Indeed, it is too complicated to synchronize the data from the theodolite with the ROS clock in real time.
+This synchronization will have to be done in post-processing.
+In addition, this code currently only works for a single transmitter-receiver communication.
+Tests must be carried out to validate it with several transmitters to a receiver.
+
+Again, it is possible that connection or other errors occur during the running of the program.
+The \autoref{sec:issue} is dedicated to this, and provides solutions to solve the problems that have arisen.
+
+%Comme le précédent noeud de ROS, le noeud d'écoute des données se situe dans le package theodolite\_node\_ROS et dans le répertoire $src$.
+%Le fichier correspondant est nommé $theodolite\_listener.cpp$.
+%Les différents paramètres de la communication avec l'antenne LoRa ainsi que les fonctions utilisées avec celle-ci sont définies juste avant la principale fonction $main$.
+%Cette fonction $main$ se compose également d'une boucle while qui effectuera plusieurs tâche à la suite.
+
+%Tout d'abord on récupère les paramètres de la configuration que l'on souhaite.
+%Ces paramètres sont définis dans le launchfile $theodolite\_listener.launch$ présent dans le répertoire $launch$ du package.
+%Deux paramètres y sont utilisés.
+%Le premier paramètres, $rate$, sert à définir la fréquence de l'écoute de la réception des messages.
+%Le second paramètre $show\_data$ sert à afficher les données reçues sur un terminal afin de debugger ou vérifier que la communication fonctionne correctement.
+%Une fois que les paramètres ont été définit, l'antenne LoRa est configuré comme pour le code de l'émetteur.
+%La différence est que l'on utilise une boucle while sans fin, dans le but d'écouter en tout temps la réception d'un message à la fréquence définie par l'utilisateur.
+
+%Cette boucle while sans fin exécute la fonction $receivepacket$, fonction qui va lire les bytes reçus et les convertir au format double.
+%Les données reçues sont ensuite sauvegarder dans un vector qui sera transmit sur ROS pour un publisher nommé $data\_publish$.
+%Par la suite, il suffit de sauvegarder ces données dans un rosbag pour pouvoir les utiliser en post-traitement.
+%Il est à noté que ce publisher n'utilise pas de timestamp de ROS.
+%En effet, il est trop compliqué de synchroniser les données issues du théodolite avec l'horloge de ROS en temps réel.
+%Cette synchronisation devra se faire en post-traitement.
+%De plus, ce code ne fonctionne pour le moment que pour une seule communication émetteur-récepteur.
+%Des tests devront être effectués pour le valider avec plusieurs émetteurs vers un récepteur.
 
 % -------------------------------------------------------------
 \section{Deployment (Coming soon)}
-\label{Deployment}
+\label{sec:Deployment}
 
 Courte introduction pour le déploiement de différents theodolite
 
