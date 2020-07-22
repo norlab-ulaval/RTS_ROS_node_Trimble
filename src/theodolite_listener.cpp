@@ -168,6 +168,7 @@ std::vector<double> vec_data{0,0,0,0,0,0,0};
 //Option selected in launchfile
 bool show_data = false;  //Option to see data on terminal when received
 int rate = 30;  //Rate of listener in Hz
+int number_of_theodolite = 3; //Number of theodolite used
 
 // #############################################
 // #############################################
@@ -364,87 +365,91 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
                 printf("Payload: %s\n", message);   
             } 
 
-            //Convert char* to value desired
-            //First theodolite number
-            vec_data[0] = (int) message[0] - 48;
-            //Second number target
-            vec_data[1] = (int) message[2] - 48;
+            if((int)receivedbytes > 1)
+            {
 
-            //Obtain horizontal angle
-            int new_iterator = 4;
-            int old_iterator = 4;
-            while(message[new_iterator]!=';')
-            {
-                new_iterator+=1;
-            }
-            char* HA_char = new char[new_iterator-old_iterator];
-            for(int i=0; i<new_iterator-old_iterator; i++)
-            {
-                HA_char[i]= (char)message[i+old_iterator];
-            }
-            vec_data[2] = atof(HA_char);
+              //Convert char* to value desired
+              //First theodolite number
+              vec_data[0] = (int) message[0] - 48;
+              //Second number target
+              vec_data[1] = (int) message[2] - 48;
 
-            //Obtain vertical angle
-            new_iterator += 1;
-            old_iterator = new_iterator;
-            while(message[new_iterator]!=';')
-            {
-                new_iterator+=1;
-            }
-            char* VA_char = new char[new_iterator-old_iterator];
-            for(int i=0; i<new_iterator-old_iterator; i++)
-            {
-                VA_char[i]= (char)message[i+old_iterator];
-            }
-            vec_data[3] = atof(VA_char);
+              //Obtain horizontal angle
+              int new_iterator = 4;
+              int old_iterator = 4;
+              while(message[new_iterator]!=';')
+              {
+                  new_iterator+=1;
+              }
+              char* HA_char = new char[new_iterator-old_iterator];
+              for(int i=0; i<new_iterator-old_iterator; i++)
+              {
+                  HA_char[i]= (char)message[i+old_iterator];
+              }
+              vec_data[2] = atof(HA_char);
 
-            //Obtain distance
-            new_iterator += 1;
-            old_iterator = new_iterator;
-            while(message[new_iterator]!=';')
-            {
-                new_iterator+=1;
-            }
-            char* dist_char = new char[new_iterator-old_iterator];
-            for(int i=0; i<new_iterator-old_iterator; i++)
-            {
-                dist_char[i]= (char)message[i+old_iterator];
-            }
-            vec_data[4] = atof(dist_char);
+              //Obtain vertical angle
+              new_iterator += 1;
+              old_iterator = new_iterator;
+              while(message[new_iterator]!=';')
+              {
+                  new_iterator+=1;
+              }
+              char* VA_char = new char[new_iterator-old_iterator];
+              for(int i=0; i<new_iterator-old_iterator; i++)
+              {
+                  VA_char[i]= (char)message[i+old_iterator];
+              }
+              vec_data[3] = atof(VA_char);
 
-            //Obtain time of data
-            new_iterator += 1;
-            old_iterator = new_iterator;
-            while(message[new_iterator]!=';')
-            {
-                new_iterator+=1;
-            }
-            char* time_char = new char[new_iterator-old_iterator];
-            for(int i=0; i<new_iterator-old_iterator; i++)
-            {
-                time_char[i]= (char)message[i+old_iterator];
-            }
-            vec_data[5] = atof(time_char);
+              //Obtain distance
+              new_iterator += 1;
+              old_iterator = new_iterator;
+              while(message[new_iterator]!=';')
+              {
+                  new_iterator+=1;
+              }
+              char* dist_char = new char[new_iterator-old_iterator];
+              for(int i=0; i<new_iterator-old_iterator; i++)
+              {
+                  dist_char[i]= (char)message[i+old_iterator];
+              }
+              vec_data[4] = atof(dist_char);
 
-            //Finally obtain the error flag
-            vec_data[6] = (int) message[new_iterator+1] - 48;
-            
-            std_msgs::Float64MultiArray msg;
-            msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-            msg.layout.dim[0].size = 7;
-            msg.layout.dim[0].stride=1;
+              //Obtain time of data
+              new_iterator += 1;
+              old_iterator = new_iterator;
+              while(message[new_iterator]!=';')
+              {
+                  new_iterator+=1;
+              }
+              char* time_char = new char[new_iterator-old_iterator];
+              for(int i=0; i<new_iterator-old_iterator; i++)
+              {
+                  time_char[i]= (char)message[i+old_iterator];
+              }
+              vec_data[5] = atof(time_char);
 
-            vector<double>::const_iterator itr, end(vec_data.end());
-            for(itr = vec_data.begin(); itr!=end; ++itr) {
-                msg.data.push_back(*itr);
-            }
+              //Finally obtain the error flag
+              vec_data[6] = (int) message[new_iterator+1] - 48;
+              
+              std_msgs::Float64MultiArray msg;
+              msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+              msg.layout.dim[0].size = 7;
+              msg.layout.dim[0].stride=1;
 
-            if(show_data)
-            {
-                ROS_INFO("theodolite: %f \n target: %f \n HA: %f \n VA: %f \n Distance: %f \n Time: %f \n Error: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5], vec_data[6]);
-            }
+              vector<double>::const_iterator itr, end(vec_data.end());
+              for(itr = vec_data.begin(); itr!=end; ++itr) {
+                  msg.data.push_back(*itr);
+              }
 
-            data_pub.publish(msg);           
+              if(show_data)
+              {
+                  ROS_INFO("theodolite: %f \n target: %f \n HA: %f \n VA: %f \n Distance: %f \n Time: %f \n Error: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5], vec_data[6]);
+              }
+
+              data_pub.publish(msg);  
+            }         
 
         } // received a message
 
@@ -486,6 +491,29 @@ static void writeBuf(byte addr, byte *value, byte len) {
     unselectreceiver();                                                                                 
 }
 
+void txlora(byte *frame, byte datalen) {
+
+    // set the IRQ mapping DIO0=TxDone DIO1=NOP DIO2=NOP
+    writeReg(RegDioMapping1, MAP_DIO0_LORA_TXDONE|MAP_DIO1_LORA_NOP|MAP_DIO2_LORA_NOP);
+    // clear all radio IRQ flags
+    writeReg(REG_IRQ_FLAGS, 0xFF);
+    // mask all IRQs but TxDone
+    writeReg(REG_IRQ_FLAGS_MASK, ~IRQ_LORA_TXDONE_MASK);
+
+    // initialize the payload size and address pointers
+    writeReg(REG_FIFO_TX_BASE_AD, 0x00);
+    writeReg(REG_FIFO_ADDR_PTR, 0x00);
+    writeReg(REG_PAYLOAD_LENGTH, datalen);
+
+    // download buffer to the radio FIFO
+    writeBuf(REG_FIFO, frame, datalen);
+    // now we actually start the transmission
+    opmode(OPMODE_TX);
+
+    printf("send: %s\n", frame);
+}
+
+
 // #############################################
 // #############################################
 // Main program
@@ -505,6 +533,8 @@ int main(int argc, char **argv)
         rate = 30;
     }
     ros::Rate loop_rate(rate);
+    //Get number of theodolite involved
+    n.getParam("/theodolite_listener/number_of_theodolite", number_of_theodolite);
 
     //Configure LoRa antenna
     wiringPiSetup () ;
@@ -521,13 +551,35 @@ int main(int argc, char **argv)
     printf("Listening at SF%i on %.6lf Mhz.\n", sf,(double)freq/1000000);
     printf("------------------\n");
 
+    //Iterator to call theodolite
+    int iterator_theodolite =0;
+
     //Listen messages sent
     while (ros::ok())
     {
+        //Ask a theodolite its data
+        std::string data = "data;" + std::to_string(iterator_theodolite);
+        unsigned char *send_message = new unsigned char[data.length()+1];
+        strcpy((char *)send_message,data.c_str());
+         
+        if (argc > 2)
+          strncpy((char *)send_message, argv[2], sizeof(send_message));
+
+        txlora(send_message, strlen((char *)send_message));
+
+        loop_rate.sleep();
+
         //Check if something arrived
         receivepacket(n, data_pub); 
+
+        iterator_theodolite++;
+        if(iterator_theodolite == number_of_theodolite-1)
+        {
+          iterator_theodolite=0;
+        }
+        
         ros::spinOnce();
-        loop_rate.sleep();
+        
     }
 
 

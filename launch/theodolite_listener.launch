@@ -4,7 +4,9 @@
         <!-- Parameter to set the rate of the listener. Should be between 1 and 100Hz -->
         <param name="rate" value= "30" />        
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
-        <param name="show_data" value= "false" />
+        <param name="show_data" value= "true" />
+        <!-- Parameter to set the number of theodolite used. Should be more than 0. -->
+        <param name="number_of_theodolite" value= "2" />
 
 	</node>
 </launch>

@@ -6,12 +6,16 @@
         <!-- Parameter to set the target number (should be between 1 and 8) -->
         <param name="target_prism" value= "1" />
         <!-- Parameter to set number of measurements. Should be 0 or higher. 0 means infinite measurments -->
-        <param name="number_of_measurments" value= "100" />
+        <param name="number_of_measurments" value= "0" />
         
         <!-- Parameter to use LoRa antenna. Set true to use it -->
         <param name="use_lora" value= "true" />
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
         <param name="show_data" value= "false" />
+        <!-- Parameter to test Lora communication with fake data. Doesn't need a theodolite -->
+        <param name="test_lora" value= "true" />
+        <!-- Parameter to set the rate of the fake data -->
+        <param name="test_rate" value= "10" />
 
         <!-- Parameter to save file after a finite number of measurements. Set True to use it -->
         <param name="save_measurements" value= "false" />
