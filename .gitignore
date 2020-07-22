@@ -1,0 +1,8 @@
+*.aux
+*.log
+*.out
+*.run.xml
+*.gz
+*.bbl
+*.blg
+theodolite_report-blx.bib
