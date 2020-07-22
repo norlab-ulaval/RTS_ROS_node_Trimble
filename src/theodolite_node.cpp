@@ -458,6 +458,9 @@ void receivepacket(unsigned char *send_message) {
               if(theodolite_number-1==number_theodolite_ask)
               {
                 //Send data if it's the theodolite
+                opmodeLora();
+                opmode(OPMODE_STANDBY);
+                opmode(OPMODE_TX);
                 txlora(send_message, strlen((char *)send_message));
               }
             }
@@ -729,6 +732,10 @@ int main(int argc, char **argv)
              
               if (argc > 2)
                 strncpy((char *)send_message, argv[2], sizeof(send_message));
+               
+              opmodeLora();
+              opmode(OPMODE_STANDBY);
+              opmode(OPMODE_RX);
 
               receivepacket(send_message);
         

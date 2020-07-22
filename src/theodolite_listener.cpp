@@ -558,6 +558,10 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         //Ask a theodolite its data
+        opmodeLora();
+        opmode(OPMODE_STANDBY);
+        opmode(OPMODE_TX);
+
         std::string data = "data;" + std::to_string(iterator_theodolite);
         unsigned char *send_message = new unsigned char[data.length()+1];
         strcpy((char *)send_message,data.c_str());
@@ -570,6 +574,10 @@ int main(int argc, char **argv)
         loop_rate.sleep();
 
         //Check if something arrived
+        opmodeLora();
+        opmode(OPMODE_STANDBY);
+        opmode(OPMODE_RX);
+
         receivepacket(n, data_pub); 
 
         iterator_theodolite++;
