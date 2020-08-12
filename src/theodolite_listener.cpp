@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <chrono>
 
 #include <sys/ioctl.h>
 
@@ -164,11 +165,12 @@ sf_t sf = SF7;
 // Set center frequency
 uint32_t  freq = 868100000; // in Mhz! (868.1)
 //Vector which will publish the data
-std::vector<double> vec_data{0,0,0,0,0,0,0};
+std::vector<double> vec_data{0,0,0,0,0};
 //Option selected in launchfile
 bool show_data = false;  //Option to see data on terminal when received
-int rate = 30;  //Rate of listener in Hz
-int number_of_theodolite = 3; //Number of theodolite used
+int rate = 10;  //Rate of listener in Hz
+int number_of_theodolite = 1; //Number of theodolite used
+bool received_data = false;
 
 // #############################################
 // #############################################
@@ -231,9 +233,9 @@ void SetupLoRa()
 {
     
     digitalWrite(RST, HIGH);
-    delay(100);
+    delay(5);
     digitalWrite(RST, LOW);
-    delay(100);
+    delay(5);
 
     byte version = readReg(REG_VERSION);
 
@@ -244,9 +246,9 @@ void SetupLoRa()
     } else {
         // sx1276?
         digitalWrite(RST, LOW);
-        delay(100);
+        delay(5);
         digitalWrite(RST, HIGH);
-        delay(100);
+        delay(5);
         version = readReg(REG_VERSION);
         if (version == 0x12) {
             // sx1276
@@ -355,28 +357,29 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
                 rssicorr = 157;
             }
 
-            if(show_data)
+
+            if((int)receivedbytes >= 2)
             {
+
+              printf("7\n");
+              if(show_data)
+              {
                 printf("Packet RSSI: %d, ", readReg(0x1A)-rssicorr);
                 printf("RSSI: %d, ", readReg(0x1B)-rssicorr);
                 printf("SNR: %li, ", SNR);
                 printf("Length: %i", (int)receivedbytes);
                 printf("\n");
                 printf("Payload: %s\n", message);   
-            } 
+              } 
 
-            if((int)receivedbytes > 1)
-            {
-
+              printf("8\n");
               //Convert char* to value desired
               //First theodolite number
               vec_data[0] = (int) message[0] - 48;
-              //Second number target
-              vec_data[1] = (int) message[2] - 48;
 
               //Obtain horizontal angle
-              int new_iterator = 4;
-              int old_iterator = 4;
+              int new_iterator = 2;
+              int old_iterator = 2;
               while(message[new_iterator]!=';')
               {
                   new_iterator+=1;
@@ -386,7 +389,7 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               {
                   HA_char[i]= (char)message[i+old_iterator];
               }
-              vec_data[2] = atof(HA_char);
+              vec_data[1] = atof(HA_char);
 
               //Obtain vertical angle
               new_iterator += 1;
@@ -400,7 +403,7 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               {
                   VA_char[i]= (char)message[i+old_iterator];
               }
-              vec_data[3] = atof(VA_char);
+              vec_data[2] = atof(VA_char);
 
               //Obtain distance
               new_iterator += 1;
@@ -414,7 +417,7 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               {
                   dist_char[i]= (char)message[i+old_iterator];
               }
-              vec_data[4] = atof(dist_char);
+              vec_data[3] = atof(dist_char);
 
               //Obtain time of data
               new_iterator += 1;
@@ -428,15 +431,14 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               {
                   time_char[i]= (char)message[i+old_iterator];
               }
-              vec_data[5] = atof(time_char);
+              vec_data[4] = atof(time_char);
 
-              //Finally obtain the error flag
-              vec_data[6] = (int) message[new_iterator+1] - 48;
-              
+              printf("9\n");
+
               std_msgs::Float64MultiArray msg;
               msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
               msg.layout.dim[0].size = 7;
-              msg.layout.dim[0].stride=1;
+              msg.layout.dim[0].stride =1;
 
               vector<double>::const_iterator itr, end(vec_data.end());
               for(itr = vec_data.begin(); itr!=end; ++itr) {
@@ -445,10 +447,11 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
 
               if(show_data)
               {
-                  ROS_INFO("theodolite: %f \n target: %f \n HA: %f \n VA: %f \n Distance: %f \n Time: %f \n Error: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5], vec_data[6]);
+                  ROS_INFO("theodolite: %f \n HA: %f \n VA: %f \n Distance: %f \n Time: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4]);
               }
 
               data_pub.publish(msg);  
+              received_data = true;
             }         
 
         } // received a message
@@ -513,6 +516,71 @@ void txlora(byte *frame, byte datalen) {
     printf("send: %s\n", frame);
 }
 
+void General_setup_lora()
+{
+    wiringPiSetup () ;
+    pinMode(ssPin, OUTPUT);
+    pinMode(dio0, INPUT);
+    pinMode(RST, OUTPUT);
+
+    wiringPiSPISetup(CHANNEL, 500000);
+
+    SetupLoRa();
+    opmodeLora();
+}
+
+void Config_tx_mode()
+{
+    SetupLoRa();
+    opmodeLora();
+    opmode(OPMODE_STANDBY);
+    writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
+    configPower(23);
+}
+
+void Config_rx_mode()
+{
+    SetupLoRa();
+    opmodeLora();
+    opmode(OPMODE_STANDBY);
+    opmode(OPMODE_RX);
+}
+
+void Call_theodolite_selected(int number_theodolite)
+{
+    std::string data = "t"+std::to_string(number_theodolite);
+    unsigned char *send_message = new unsigned char[data.length()+1];
+    strcpy((char *)send_message,data.c_str());
+
+    txlora(send_message, strlen((char *)send_message));
+}
+
+void Update_number_theodolite_called(int &number_theodolite, int max_theodolite_number)
+{
+    number_theodolite++;
+    if(number_theodolite > max_theodolite_number)
+    {
+        number_theodolite=1;
+    }
+}
+
+void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
+{
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    while(received_data == false)
+    {
+        {
+            receivepacket(n, data_pub); 
+            delay(1);
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200))
+            {
+                break;
+            }
+        }
+    }
+    received_data = false;
+}
+
 
 // #############################################
 // #############################################
@@ -524,7 +592,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "theodolite_listener");
     ros::NodeHandle n;
     //Publisher of the data in a vector
-    ros::Publisher data_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_data", 1000);
+    ros::Publisher data_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_data", 10);
     n.getParam("/theodolite_listener/rate", rate);
     //Set the rate of the listener
     if(rate >100 or rate<1)
@@ -537,59 +605,53 @@ int main(int argc, char **argv)
     n.getParam("/theodolite_listener/number_of_theodolite", number_of_theodolite);
 
     //Configure LoRa antenna
-    wiringPiSetup () ;
-    pinMode(ssPin, OUTPUT);
-    pinMode(dio0, INPUT);
-    pinMode(RST, OUTPUT);
-    wiringPiSPISetup(CHANNEL, 500000);
-    SetupLoRa();
+    General_setup_lora();
 
-    // radio init
-    opmodeLora();
-    opmode(OPMODE_STANDBY);
-    opmode(OPMODE_RX);
-    printf("Listening at SF%i on %.6lf Mhz.\n", sf,(double)freq/1000000);
+
     printf("------------------\n");
 
     //Iterator to call theodolite
-    int iterator_theodolite =0;
+    int number_theodolite_called=1;
+    int max_theodolite_number = number_of_theodolite;
+
+    // Delay parameter in milliseconds between each message sent
+    int time_delay = 60;
 
     //Listen messages sent
     while (ros::ok())
     {
-        //Ask a theodolite its data
-        opmodeLora();
-        opmode(OPMODE_STANDBY);
-        opmode(OPMODE_TX);
+        printf("1\n");
+        // Tx configuration to call theodolite targeted
+        Config_tx_mode();
 
-        std::string data = "data;" + std::to_string(iterator_theodolite);
-        unsigned char *send_message = new unsigned char[data.length()+1];
-        strcpy((char *)send_message,data.c_str());
-         
-        if (argc > 2)
-          strncpy((char *)send_message, argv[2], sizeof(send_message));
+        printf("------------------\n");
 
-        txlora(send_message, strlen((char *)send_message));
-
-        loop_rate.sleep();
-
-        //Check if something arrived
-        opmodeLora();
-        opmode(OPMODE_STANDBY);
-        opmode(OPMODE_RX);
-
-        receivepacket(n, data_pub); 
-
-        iterator_theodolite++;
-        if(iterator_theodolite == number_of_theodolite-1)
-        {
-          iterator_theodolite=0;
-        }
+        // Send message to all theodolite, and by the same time call the one we want
+        Call_theodolite_selected(number_theodolite_called);
+        printf("2\n");
         
-        ros::spinOnce();
-        
+        // Update the theodolite called for later
+        Update_number_theodolite_called(number_theodolite_called, max_theodolite_number);
+        printf("3\n");
+
+        // Delay to let time for the theodolite to switch mode
+        delay(time_delay);  //60 for 2
+        printf("4\n");
+
+        // Rx configuration to read the message send by the theodolite called
+        Config_rx_mode();
+
+        printf("------------------\n");
+
+        // Received the message if there is one
+        Received_data_check(n, data_pub);
+        printf("5\n");
+
+        // Update ros loop        
+        //ros::spinOnce();
+        //printf("6\n");
+
     }
-
 
     return 0;
 }
