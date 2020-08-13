@@ -778,7 +778,7 @@ int main(int argc, char **argv)
 
 		   		printf("------------------\n");
 
-		    	strncpy((char *)hello, "1;2.000;5.000;6.000;144444.0;" , sizeof(hello));
+		    	strncpy((char *)hello, "1;2.00000;5.00000;6.00000;1.59733e+09;" , sizeof(hello));
 		    	txlora(hello, strlen((char *)hello));
 
 		     	delay(60); //20 is the minimum to send 2 bytes

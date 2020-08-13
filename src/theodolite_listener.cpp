@@ -371,8 +371,9 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
                 printf("\n");
                 printf("Payload: %s\n", message);   
               } 
-
-              printf("8\n");
+              printf("Payload: %s\n", message);  
+              
+              bool corrupted_message = false;
               //Convert char* to value desired
               //First theodolite number
               vec_data[0] = (int) message[0] - 48;
@@ -380,9 +381,13 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               //Obtain horizontal angle
               int new_iterator = 2;
               int old_iterator = 2;
-              while(message[new_iterator]!=';')
+              while(message[new_iterator]!=';' or new_iterator<(int)receivedbytes)
               {
                   new_iterator+=1;
+              }
+              if(new_iterator >= (int)receivedbytes)
+              {
+                corrupted_message=true;
               }
               char* HA_char = new char[new_iterator-old_iterator];
               for(int i=0; i<new_iterator-old_iterator; i++)
@@ -394,9 +399,13 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               //Obtain vertical angle
               new_iterator += 1;
               old_iterator = new_iterator;
-              while(message[new_iterator]!=';')
+              while(message[new_iterator]!=';' or new_iterator<(int)receivedbytes)
               {
                   new_iterator+=1;
+              }
+              if(new_iterator >= (int)receivedbytes)
+              {
+                corrupted_message=true;
               }
               char* VA_char = new char[new_iterator-old_iterator];
               for(int i=0; i<new_iterator-old_iterator; i++)
@@ -408,9 +417,13 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               //Obtain distance
               new_iterator += 1;
               old_iterator = new_iterator;
-              while(message[new_iterator]!=';')
+              while(message[new_iterator]!=';' or new_iterator<(int)receivedbytes)
               {
                   new_iterator+=1;
+              }
+              if(new_iterator >= (int)receivedbytes)
+              {
+                corrupted_message=true;
               }
               char* dist_char = new char[new_iterator-old_iterator];
               for(int i=0; i<new_iterator-old_iterator; i++)
@@ -422,9 +435,13 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               //Obtain time of data
               new_iterator += 1;
               old_iterator = new_iterator;
-              while(message[new_iterator]!=';')
+              while(message[new_iterator]!=';' or new_iterator<(int)receivedbytes)
               {
                   new_iterator+=1;
+              }
+              if(new_iterator >= (int)receivedbytes)
+              {
+                corrupted_message=true;
               }
               char* time_char = new char[new_iterator-old_iterator];
               for(int i=0; i<new_iterator-old_iterator; i++)
@@ -433,7 +450,6 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               }
               vec_data[4] = atof(time_char);
 
-              printf("9\n");
 
               std_msgs::Float64MultiArray msg;
               msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
@@ -620,7 +636,6 @@ int main(int argc, char **argv)
     //Listen messages sent
     while (ros::ok())
     {
-        printf("1\n");
         // Tx configuration to call theodolite targeted
         Config_tx_mode();
 
@@ -628,15 +643,12 @@ int main(int argc, char **argv)
 
         // Send message to all theodolite, and by the same time call the one we want
         Call_theodolite_selected(number_theodolite_called);
-        printf("2\n");
         
         // Update the theodolite called for later
         Update_number_theodolite_called(number_theodolite_called, max_theodolite_number);
-        printf("3\n");
 
         // Delay to let time for the theodolite to switch mode
         delay(time_delay);  //60 for 2
-        printf("4\n");
 
         // Rx configuration to read the message send by the theodolite called
         Config_rx_mode();
@@ -645,7 +657,6 @@ int main(int argc, char **argv)
 
         // Received the message if there is one
         Received_data_check(n, data_pub);
-        printf("5\n");
 
         // Update ros loop        
         //ros::spinOnce();
