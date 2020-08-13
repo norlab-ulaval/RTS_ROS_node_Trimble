@@ -19,6 +19,7 @@
 #define ASIO_STANDALONE
 #include <asio/thread_pool.hpp>
 #include <asio/post.hpp>
+#include<chrono>
 
 //For LoRa antenna
 #include <string>
@@ -161,6 +162,7 @@ typedef bool boolean;
 typedef unsigned char byte;
 //Variable to receive the message transmitted
 char message[256];
+byte hello[32] = "HELLO";
 byte receivedbytes;
 // Channel of communication
 static const int CHANNEL = 0;
@@ -183,6 +185,8 @@ double Dist;        //Distance
 double Time;        //Time
 int error_theodolite;   //flag for error
 int theodolite_number = 0;
+bool received_data = false;
+bool break_iterator = false;
 
 //Fonctions of LoRa antenna
 // #############################################
@@ -246,9 +250,9 @@ void SetupLoRa()
 {
     
     digitalWrite(RST, HIGH);
-    delay(100);
+    delay(5);
     digitalWrite(RST, LOW);
-    delay(100);
+    delay(5);
 
     byte version = readReg(REG_VERSION);
 
@@ -259,9 +263,9 @@ void SetupLoRa()
     } else {
         // sx1276?
         digitalWrite(RST, LOW);
-        delay(100);
+        delay(5);
         digitalWrite(RST, HIGH);
-        delay(100);
+        delay(5);
         version = readReg(REG_VERSION);
         if (version == 0x12) {
             // sx1276
@@ -400,7 +404,7 @@ boolean receive(char *payload) {
     return true;
 }
 
-void receivepacket(unsigned char *send_message) {
+void receivepacket(int theodolite_number) {
 
     long int SNR;
     int rssicorr;
@@ -408,6 +412,9 @@ void receivepacket(unsigned char *send_message) {
     if(digitalRead(dio0) == 1)
     {
         if(receive(message)) {
+
+            std::cout << message << std::endl;
+
             byte value = readReg(REG_PKT_SNR_VALUE);
             if( value & 0x80 ) // The SNR sign bit is 1
             {
@@ -427,48 +434,75 @@ void receivepacket(unsigned char *send_message) {
                 rssicorr = 157;
             }
 
-
-            printf("Packet RSSI: %d, ", readReg(0x1A)-rssicorr);
-            printf("RSSI: %d, ", readReg(0x1B)-rssicorr);
-            printf("SNR: %li, ", SNR);
-            printf("Length: %i", (int)receivedbytes);
-            printf("\n");
-            printf("Payload: %s\n", message);   
-            
-
-            //Convert char* to value desired
-
-            //See instruction ask
-            int new_iterator = 0;
-            int old_iterator = 0;
-            while(message[new_iterator]!=';')
+            if((int)receivedbytes >= 2)
             {
-                new_iterator+=1;
-            }
-            char* message_char = new char[new_iterator-old_iterator];
-            for(int i=0; i<new_iterator-old_iterator; i++)
-            {
-                message_char[i]= (char)message[i+old_iterator];
-            }
-            
-            //If data is requested, check which theodolite has to send them
-            if(message_char=="data")
-            {
-              int number_theodolite_ask = (int) message[new_iterator+1] - 48;
-              if(theodolite_number-1==number_theodolite_ask)
-              {
-                //Send data if it's the theodolite
-                opmodeLora();
-                opmode(OPMODE_STANDBY);
-                opmode(OPMODE_TX);
-                txlora(send_message, strlen((char *)send_message));
-              }
+                if(message[0]=='t' && message[1]==('0' + theodolite_number))
+                {
+                    printf("Packet RSSI: %d, ", readReg(0x1A)-rssicorr);
+                    printf("RSSI: %d, ", readReg(0x1B)-rssicorr);
+                    printf("SNR: %li, ", SNR);
+                    printf("Length: %i", (int)receivedbytes);
+                    printf("\n");
+                    printf("Payload: %s\n", message);
+                    message[0] = '\0';
+
+                    received_data = true;
+                }
             }
      
-
         } // received a message
 
     } // dio0=1
+}
+
+void General_setup_lora()
+{
+    wiringPiSetup () ;
+    pinMode(ssPin, OUTPUT);
+    pinMode(dio0, INPUT);
+    pinMode(RST, OUTPUT);
+
+    wiringPiSPISetup(CHANNEL, 500000);
+
+    SetupLoRa();
+    opmodeLora();
+}
+
+void Config_rx_mode()
+{
+    // radio init
+    SetupLoRa();
+    opmodeLora();
+    opmode(OPMODE_STANDBY);
+    opmode(OPMODE_RX);
+}
+
+void Config_tx_mode()
+{
+    SetupLoRa();
+    opmodeLora();
+    // enter standby mode (required for FIFO loading))
+    opmode(OPMODE_STANDBY);
+    writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
+    configPower(23);
+}
+
+void Received_data_check()
+{
+    while (received_data == false)
+    {
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+        while(1)
+        {
+            receivepacket(theodolite_number);
+            delay(1);
+            
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200)) 
+                    break;
+        }
+    }
+
+    received_data = false;
 }
 
 //Fonction for theodolite
@@ -512,238 +546,248 @@ int main(int argc, char **argv)
         {
             printf("Starting LoRa antenna\n");
 
-            wiringPiSetup () ;
-            pinMode(ssPin, OUTPUT);
-            pinMode(dio0, INPUT);
-            pinMode(RST, OUTPUT);
-            wiringPiSPISetup(CHANNEL, 500000);
-            SetupLoRa();
-            opmodeLora();
-            // enter standby mode (required for FIFO loading))
-            opmode(OPMODE_STANDBY);
-            writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
-            configPower(23);
-            printf("Send packets at SF%i on %.6lf Mhz.\n", sf,(double)freq/1000000);
+            General_setup_lora();
             printf("------------------\n");
-            printf("\n");
         }
 
-        if(!test_lora)
+		// If no test with fake data
+		if(!test_lora)
         {       
         
-          if(theodolite_number < 1 or theodolite_number > 8)
-          {
-              printf("Error in setting of theodolite number! Number should be between 1 and 8 \n");
-              return 0;
-          }
-          else
-          {
-              if(target_prism > 8 or target_prism < 1){
-		          std::cout << "Wrong target prism number! Change the value to begin. Should be between 1 and 8" << std::endl;
-                  return 0;
-	          }
-              else{
-                  if(number_of_measurements_choice < 0){
-		              std::cout << "Wrong number of measurements! Change the value to begin. Should be 0 or higher" << std::endl;
-                      return 0;
-	              }
-	              else{
-                      std::cout << "Target prism acquired is: " << target_prism << std::endl;
-                      if(number_of_measurements_choice != 0)
-                          std::cout << "Number of measurements decided is: " << number_of_measurements_choice << std::endl;
-                      else
-                          std::cout << "Number of measurements decided is infinite !" << std::endl;
+			if(theodolite_number < 1 or theodolite_number > 8)
+			{
+          		printf("Error in setting of theodolite number! Number should be between 1 and 8 \n");
+            	break_iterator = true;
+			}
+
+			if(target_prism > 8 or target_prism < 1)
+			{
+				std::cout << "Wrong target prism number! Change the value to begin. Should be between 1 and 8" << std::endl;
+            	break_iterator = true;
+			}
+
+			if(number_of_measurements_choice < 0)
+			{
+				std::cout << "Wrong number of measurements! Change the value to begin. Should be 0 or higher" << std::endl;
+				break_iterator = true;
+			}
+
+			std::cout << "Target prism acquired is: " << target_prism << std::endl;
+			if(number_of_measurements_choice != 0)
+				std::cout << "Number of measurements decided is: " << number_of_measurements_choice << std::endl;
+			else
+				std::cout << "Number of measurements decided is infinite !" << std::endl;
                       
-                      //Load driver of the theodolite
-                      SsiInstrument& instrument = SsiInstrument::GetInstrument();
-                      instrument.LoadDriver();
+			//Load driver of the theodolite
+			SsiInstrument& instrument = SsiInstrument::GetInstrument();
+			instrument.LoadDriver();
 
-	                  std::cout << "Loaded driver" << std::endl;	
-	                  std::cout << "Connecting..." << std::endl;
+			std::cout << "Loaded driver" << std::endl;	
+			std::cout << "Connecting..." << std::endl;
 
-                      //Connect to the theodolite
-	                  int err = instrument.Connect();
-	                  if(err)	{
-		                  std::cout << "Error during connection: " << err << std::endl;
+			//Connect to the theodolite
+			int err = instrument.Connect();
+			if(err)	
+			{
+				std::cout << "Error during connection: " << err << std::endl;
                           
-                          //Disconnect driver of theodolite
-                          instrument.FreeDriver();
+				//Disconnect driver of theodolite
+				instrument.FreeDriver();
 
-	                      std::cout << "Unloaded driver" << std::endl;
-	                      std::cout << "Terminating program" << std::endl;
-	                      return 0;
-	                  }
-	                  else{
-		                  std::cout << "Intrument connected" << std::endl;
-	                  
-                          //Select Multitrack mode with the proper prism number
-                          instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism);
-	                      std::shared_ptr<ObservationListener> observation_listener = std::make_shared<ObservationListener>();
+				std::cout << "Unloaded driver" << std::endl;
+				std::cout << "Terminating program" << std::endl;
+	            break_iterator = true;
+			}
 
-                          //Begin tracking of prism
-                          if(instrument.Tracking(true, observation_listener.get()) == 0)
-	                      {
-                              //Variable to detect new measurments
-                              int number_of_measurements_new = 0;   //New number of measurments
-                              int number_of_measurements_old = 0;   //Old number of measurments
+			if(break_iterator == false)
+			{
+
+				std::cout << "Intrument connected" << std::endl;
+			              
+				//Select Multitrack mode with the proper prism number
+				instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism);
+				std::shared_ptr<ObservationListener> observation_listener = std::make_shared<ObservationListener>();
+
+				//Begin tracking of prism
+				if(instrument.Tracking(true, observation_listener.get()) == 0)
+				{
+					//Variable to detect new measurments
+					int number_of_measurements_new = 0;   //New number of measurments
+					int number_of_measurements_old = 0;   //Old number of measurments
+		                          
+					std::cout << "Started measuring" << std::endl;
+
+					if(number_of_measurements_choice == 0)  //Case we want not stop measurements
+					{
+						while(true)
+						{
+							try
+							{
+								if(use_lora)
+								{
+									Config_rx_mode();
+									printf("------------------\n");
+									Received_data_check();
+									Config_tx_mode();
+								}
+								else
+								{
+									usleep(30);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
+								}    
                               
-		                      std::cout << "Started measuring" << std::endl;
+								number_of_measurements_new = observation_listener->getSizeVector();     //Get number of measurements stored
+								if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
+								{
 
-                              if(number_of_measurements_choice == 0)  //Case we want not stop measurements
-                              {
-                                  while(true)
-	                              {
-                                      try{
-                                          usleep(30);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
-                                          number_of_measurements_new = observation_listener->getSizeVector();     //Get number of measurements stored
-                                          if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
-                                          {
-                                              HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
-                                              VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
-                                              Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
-                                              Time = (observation_listener->getObservations())[3][number_of_measurements_new-1];
-                                              error_theodolite = (observation_listener->getObservations())[4][number_of_measurements_new-1];
-                                              number_of_measurements_old = number_of_measurements_new;
+									HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
+									VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
+									Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
+									Time = (observation_listener->getObservations())[3][number_of_measurements_new-1];
+									error_theodolite = (observation_listener->getObservations())[4][number_of_measurements_new-1];
+									number_of_measurements_old = number_of_measurements_new;
 
-                                              if(show_data)
-                                              {
-                                                  //Print data of measurement
-		                                          std::cout << number_of_measurements_new << " measurements taken" << std::endl;
-                                                  std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
-                                                  std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
-                                                  std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
-                                                  std::cout << "TIMESTAMP_VECTOR: " << Time << std::endl;
-                                                  std::cout << "ERROR: " << error_theodolite << std::endl;
-                                              }
+	  								if(show_data)
+									{
+										//Print data of measurement
+										std::cout << number_of_measurements_new << " measurements taken" << std::endl;
+										std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
+										std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
+										std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
+										std::cout << "TIMESTAMP_VECTOR: " << Time << std::endl;
+										std::cout << "ERROR: " << error_theodolite << std::endl;
+									}
 
-                                              //Send data to robot
-                                              if(use_lora)
-                                              {
-                                                  std::string data = std::to_string(theodolite_number) + ";" + std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
-                                                  unsigned char *send_message = new unsigned char[data.length()+1];
-                                                  strcpy((char *)send_message,data.c_str());
-           
-                                                  if (argc > 2)
-                                                      strncpy((char *)send_message, argv[2], sizeof(send_message));
+									//Send data to robot
+									if(use_lora)
+									{										
+								   		printf("------------------\n");
+										std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";";
+										unsigned char *send_message = new unsigned char[data.length()+1];
+										strcpy((char *)send_message,data.c_str());
+										txlora(send_message, strlen((char *)send_message));
 
-                                                  receivepacket(send_message);
-                                                  //txlora(send_message, strlen((char *)send_message));
-                                              }
-                                          }
-                                      }
-                                      catch(std::exception& e)
-	                                  {
-		                                  printf("%s\n", e.what());
-	                                  }
-                                  }
-                              }
-                              else
-                              {
-	                              while(number_of_measurements_new <= number_of_measurements_choice)      //Case we want a limited number of measurements
-	                              {
-                                      try{                                    
-                                          usleep(30);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
-                                          number_of_measurements_new = observation_listener->getSizeVector();     //Get number of measurements stored
-                                          if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
-                                          {
+									 	delay(60); //20 is the minimum to send 2 bytes
+									}
 
-                                              HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
-                                              VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
-                                              Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
-                                              Time = (observation_listener->getObservations())[3][number_of_measurements_new-1];
-                                              error_theodolite = (observation_listener->getObservations())[4][number_of_measurements_new-1];
-                                              number_of_measurements_old = number_of_measurements_new;
+								}
+							}
+							catch(std::exception& e)
+							{
+								printf("%s\n", e.what());
+							}
+						}
+					}
+					else
+					{
+						while(number_of_measurements_new <= number_of_measurements_choice)      //Case we want a limited number of measurements
+						{
+							try
+							{
+								if(use_lora)
+								{
+									Config_rx_mode();
+									printf("------------------\n");
+									Received_data_check();
+									Config_tx_mode();
+								}
+								else
+								{
+									usleep(30);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
+								}    
+                              
+								number_of_measurements_new = observation_listener->getSizeVector();     //Get number of measurements stored
+								if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
+								{
 
-                                              if(show_data)
-                                              {
-                                                  //Print data of measurement
-		                                          std::cout << number_of_measurements_new << " measurements taken" << std::endl;
-                                                  std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
-                                                  std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
-                                                  std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
-                                                  std::cout << "TIMESTAMP_VECTOR: " << Time << std::endl;
-                                                  std::cout << "ERROR: " << error_theodolite << std::endl;
-                                              }
+									HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
+									VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
+									Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
+									Time = (observation_listener->getObservations())[3][number_of_measurements_new-1];
+									error_theodolite = (observation_listener->getObservations())[4][number_of_measurements_new-1];
+									number_of_measurements_old = number_of_measurements_new;
 
-                                              //Send data to robot
-                                              if(use_lora)
-                                              {
-                                                  std::string data = std::to_string(theodolite_number) + ";" + std::to_string(target_prism) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";" + std::to_string(error_theodolite);
-                                                  unsigned char *send_message = new unsigned char[data.length()+1];
-                                                  strcpy((char *)send_message,data.c_str());
-           
-                                                  if (argc > 2)
-                                                      strncpy((char *)send_message, argv[2], sizeof(send_message));
+	  								if(show_data)
+									{
+										//Print data of measurement
+										std::cout << number_of_measurements_new << " measurements taken" << std::endl;
+										std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
+										std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
+										std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
+										std::cout << "TIMESTAMP_VECTOR: " << Time << std::endl;
+										std::cout << "ERROR: " << error_theodolite << std::endl;
+									}
 
-                                                  receivepacket(send_message);
-                                                  //txlora(send_message, strlen((char *)send_message));
-                                              }
+									//Send data to robot
+									if(use_lora)
+									{										
+								   		printf("------------------\n");
+										std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";";
+										unsigned char *send_message = new unsigned char[data.length()+1];
+										strcpy((char *)send_message,data.c_str());
+										txlora(send_message, strlen((char *)send_message));
 
-                                          }
-                                      }
-                                      catch(std::exception& e)
-	                                  {
-		                                  printf("%s\n", e.what());
-	                                  }
-	                              }
-                              }
-                              //Stop measurement when it's finished
-	                          std::cout << "Stopped measuring" << std::endl;
-	                          instrument.Tracking(false, observation_listener.get());
+									 	delay(60); //20 is the minimum to send 2 bytes
+									}
 
-                              //Save data in file if asked
-                              bool save_measurements = false;
-                              n.getParam("/theodolite_node/save_measurements", save_measurements); 
-                              if(save_measurements)
-                              {
-                                  std::string file_measurements;
-                                  n.getParam("/theodolite_node/file_measurements", file_measurements);
-                                  std::cout << "Save measurements in " << file_measurements << std::endl;
-                                  observation_listener->saveFile(file_measurements, 10);
-                              }
-	                      }
-	                      else
-	                      {
-		                      std::cout << "Error in starting tracking" << std::endl;
-	                      }
+								}
+							}
+							catch(std::exception& e)
+							{
+								printf("%s\n", e.what());
+							}
+						}
+					}
+					//Stop measurement when it's finished
+					std::cout << "Stopped measuring" << std::endl;
+					instrument.Tracking(false, observation_listener.get());
 
-                          //Disconnect of the theodolite and remove driver
-                          std::cout << "Disconnecting..." << std::endl;
-	                      instrument.FreeDriver();
-	                      std::cout << "Unloaded driver" << std::endl;
-	                      std::cout << "Terminating program" << std::endl;
-	                      return 0;
+					//Save data in file if asked
+					bool save_measurements = false;
+					n.getParam("/theodolite_node/save_measurements", save_measurements); 
+					if(save_measurements)
+					{
+						std::string file_measurements;
+						n.getParam("/theodolite_node/file_measurements", file_measurements);
+						std::cout << "Save measurements in " << file_measurements << std::endl;
+						observation_listener->saveFile(file_measurements, 10);
+					}
+				}
+				else
+				{
+					std::cout << "Error in starting tracking" << std::endl;
+				}
 
-                      }
-                  }
-              }
-          }
-          
-	      }
-        else
-        {
-            while(ros::ok())
-            {
-              std::string data = std::to_string(1) + ";" + std::to_string(1) + ";" + std::to_string(2.0) + ";" + std::to_string(3.0) + ";" + std::to_string(4.0) + ";" + std::to_string(5.0) + ";" + std::to_string(0);
-              unsigned char *send_message = new unsigned char[data.length()+1];
-              strcpy((char *)send_message,data.c_str());
-    
-              std::cout << data << std::endl;
-             
-              if (argc > 2)
-                strncpy((char *)send_message, argv[2], sizeof(send_message));
-               
-              opmodeLora();
-              opmode(OPMODE_STANDBY);
-              opmode(OPMODE_RX);
+				//Disconnect of the theodolite and remove driver
+				std::cout << "Disconnecting..." << std::endl;
+				instrument.FreeDriver();
+				std::cout << "Unloaded driver" << std::endl;
+				std::cout << "Terminating program" << std::endl;
+			}
+		}
+		else
+		{
+			while(ros::ok())
+			{
+		    	Config_rx_mode();
 
-              receivepacket(send_message);
-        
-              loop_rate.sleep();
-              ros::spinOnce();
-            }
-        }
+		     	printf("------------------\n");
+
+		     	Received_data_check();
+
+		    	Config_tx_mode();
+
+		   		printf("------------------\n");
+
+		    	strncpy((char *)hello, "1;2.000;5.000;6.000;144444.0;" , sizeof(hello));
+		    	txlora(hello, strlen((char *)hello));
+
+		     	delay(60); //20 is the minimum to send 2 bytes
+		     	ros::spinOnce();
+		    }
+		}
     }
+
+	return 0;
 }
 
 int ssi_output(const char* fmt, ...)
