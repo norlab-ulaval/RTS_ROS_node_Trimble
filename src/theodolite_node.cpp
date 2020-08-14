@@ -250,9 +250,9 @@ void SetupLoRa()
 {
     
     digitalWrite(RST, HIGH);
-    delay(5);
+    delay(100);
     digitalWrite(RST, LOW);
-    delay(5);
+    delay(100);
 
     byte version = readReg(REG_VERSION);
 
@@ -263,9 +263,9 @@ void SetupLoRa()
     } else {
         // sx1276?
         digitalWrite(RST, LOW);
-        delay(5);
+        delay(100);
         digitalWrite(RST, HIGH);
-        delay(5);
+        delay(100);
         version = readReg(REG_VERSION);
         if (version == 0x12) {
             // sx1276
@@ -312,7 +312,7 @@ void SetupLoRa()
     }
     writeReg(REG_MAX_PAYLOAD_LENGTH,0x80);
     writeReg(REG_PAYLOAD_LENGTH,PAYLOAD_LENGTH);
-    writeReg(REG_HOP_PERIOD,0xFF);
+    writeReg(REG_HOP_PERIOD,0x00);
     writeReg(REG_FIFO_ADDR_PTR, readReg(REG_FIFO_RX_BASE_AD));
 
     writeReg(REG_LNA, LNA_MAX_GAIN);
@@ -360,8 +360,9 @@ void txlora(byte *frame, byte datalen) {
     writeReg(RegDioMapping1, MAP_DIO0_LORA_TXDONE|MAP_DIO1_LORA_NOP|MAP_DIO2_LORA_NOP);
     // clear all radio IRQ flags
     writeReg(REG_IRQ_FLAGS, 0xFF);
+    
     // mask all IRQs but TxDone
-    writeReg(REG_IRQ_FLAGS_MASK, ~IRQ_LORA_TXDONE_MASK);
+    //writeReg(REG_IRQ_FLAGS_MASK, ~IRQ_LORA_TXDONE_MASK);
 
     // initialize the payload size and address pointers
     writeReg(REG_FIFO_TX_BASE_AD, 0x00);
@@ -371,9 +372,21 @@ void txlora(byte *frame, byte datalen) {
     // download buffer to the radio FIFO
     writeBuf(REG_FIFO, frame, datalen);
     // now we actually start the transmission
+
+    clock_t start, end;
+    double cpu_time_used = 0.0;
+
+    start = clock();
     opmode(OPMODE_TX);
 
-    printf("send: %s\n", frame);
+    while(!(digitalRead(dio0) == 1))
+    {
+        delay(1);
+    }
+    
+    end = clock(); 
+    cpu_time_used = ((double)(end-start)) / CLOCKS_PER_SEC;
+    printf ("Done sending in %.6lf s\n", cpu_time_used);
 }
 
 boolean receive(char *payload) {
@@ -412,8 +425,6 @@ void receivepacket(int theodolite_number) {
     if(digitalRead(dio0) == 1)
     {
         if(receive(message)) {
-
-            std::cout << message << std::endl;
 
             byte value = readReg(REG_PKT_SNR_VALUE);
             if( value & 0x80 ) // The SNR sign bit is 1
@@ -464,27 +475,22 @@ void General_setup_lora()
 
     wiringPiSPISetup(CHANNEL, 500000);
 
-    SetupLoRa();
+    SetupLoRa();	
     opmodeLora();
 }
 
 void Config_rx_mode()
 {
-    // radio init
-    SetupLoRa();
-    opmodeLora();
-    opmode(OPMODE_STANDBY);
+    // clear the irq
+    writeReg(REG_IRQ_FLAGS, 0xFF);
+    // set the IRQ mapping DIO0=RxDone DIO1=NOP DIO2=NOP
+    writeReg(RegDioMapping1, MAP_DIO0_LORA_TXDONE | MAP_DIO1_LORA_NOP | MAP_DIO2_LORA_NOP);
     opmode(OPMODE_RX);
 }
 
 void Config_tx_mode()
 {
-    SetupLoRa();
-    opmodeLora();
-    // enter standby mode (required for FIFO loading))
     opmode(OPMODE_STANDBY);
-    writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
-    configPower(23);
 }
 
 void Received_data_check()
