@@ -162,7 +162,7 @@ typedef bool boolean;
 typedef unsigned char byte;
 //Variable to receive the message transmitted
 char message[256];
-byte hello[32] = "HELLO";
+byte hello[100] = "HELLO";
 byte receivedbytes;
 // Channel of communication
 static const int CHANNEL = 0;
@@ -373,20 +373,20 @@ void txlora(byte *frame, byte datalen) {
     writeBuf(REG_FIFO, frame, datalen);
     // now we actually start the transmission
 
-    clock_t start, end;
+    /*clock_t start, end;
     double cpu_time_used = 0.0;
 
-    start = clock();
+    start = clock();*/
     opmode(OPMODE_TX);
 
-    while(!(digitalRead(dio0) == 1))
+    /*while(!(digitalRead(dio0) == 1))
     {
         delay(1);
     }
     
     end = clock(); 
     cpu_time_used = ((double)(end-start)) / CLOCKS_PER_SEC;
-    printf ("Done sending in %.6lf s\n", cpu_time_used);
+    printf ("Done sending in %.6lf s\n", cpu_time_used);*/
 }
 
 boolean receive(char *payload) {
@@ -455,7 +455,6 @@ void receivepacket(int theodolite_number) {
                     printf("Length: %i", (int)receivedbytes);
                     printf("\n");
                     printf("Payload: %s\n", message);
-                    message[0] = '\0';
 
                     received_data = true;
                 }
@@ -477,6 +476,9 @@ void General_setup_lora()
 
     SetupLoRa();	
     opmodeLora();
+
+    writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
+    configPower(23);
 }
 
 void Config_rx_mode()
@@ -503,7 +505,7 @@ void Received_data_check()
             receivepacket(theodolite_number);
             delay(1);
             
-            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200)) 
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(100)) 
                     break;
         }
     }
@@ -776,19 +778,20 @@ int main(int argc, char **argv)
 			{
 		    	Config_rx_mode();
 
-		     	printf("------------------\n");
+		     	//printf("------------------\n");
 
 		     	Received_data_check();
 
 		    	Config_tx_mode();
 
-		   		printf("------------------\n");
+		   		//printf("------------------\n");
 
 		    	strncpy((char *)hello, "1;2.00000;5.00000;6.00000;1.59733e+09;" , sizeof(hello));
 		    	txlora(hello, strlen((char *)hello));
 
-		     	delay(60); //20 is the minimum to send 2 bytes
-		     	ros::spinOnce();
+		     	delay(20); //20 is the minimum to send 2 bytes
+		     	
+                ros::spinOnce();
 		    }
 		}
     }
