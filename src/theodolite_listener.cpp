@@ -370,8 +370,8 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
                 printf("\n");
                 printf("Payload: %s\n", message);   
               } 
-              
-              bool corrupted_message = false;
+
+              /*bool corrupted_message = false;
               //Convert char* to value desired
               //First theodolite number
               vec_data[0] = (int) message[0] - 48;
@@ -465,8 +465,8 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
               }
 
               data_pub.publish(msg);  
-              received_data = true;
-            }         
+              received_data = true;*/
+            }   
 
         } // received a message
 
@@ -527,20 +527,20 @@ void txlora(byte *frame, byte datalen) {
     writeBuf(REG_FIFO, frame, datalen);
     // now we actually start the transmission
 
-    clock_t start, end;
+    /*clock_t start, end;
     double cpu_time_used = 0.0;
 
-    start = clock();
+    start = clock();*/
     opmode(OPMODE_TX);
 
-    while(!(digitalRead(dio0) == 1))
+    /*while(!(digitalRead(dio0) == 1))
     {
         delay(1);
     }
     
     end = clock(); 
     cpu_time_used = ((double)(end-start)) / CLOCKS_PER_SEC;
-    printf ("Done sending in %.6lf s\n", cpu_time_used);
+    printf ("Done sending in %.6lf s\n", cpu_time_used);*/
 }
 
 void General_setup_lora()
@@ -598,7 +598,7 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
         {
             receivepacket(n, data_pub); 
             delay(1);
-            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200))
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(100))
             {
                 break;
             }
@@ -629,6 +629,7 @@ int main(int argc, char **argv)
     ros::Rate loop_rate(rate);
     //Get number of theodolite involved
     n.getParam("/theodolite_listener/number_of_theodolite", number_of_theodolite);
+    n.getParam("/theodolite_listener/show_data", show_data);
 
     //Configure LoRa antenna
     General_setup_lora();
@@ -641,7 +642,7 @@ int main(int argc, char **argv)
     int max_theodolite_number = number_of_theodolite;
 
     // Delay parameter in milliseconds between each message sent
-    int time_delay = 60;
+    int time_delay = 30;
 
     //Listen messages sent
     while (ros::ok())
@@ -649,7 +650,7 @@ int main(int argc, char **argv)
         // Tx configuration to call theodolite targeted
         Config_tx_mode();
 
-        printf("------------------\n");
+        //printf("------------------\n");
 
         // Send message to all theodolite, and by the same time call the one we want
         Call_theodolite_selected(number_theodolite_called);
@@ -663,7 +664,7 @@ int main(int argc, char **argv)
         // Rx configuration to read the message send by the theodolite called
         Config_rx_mode();
 
-        printf("------------------\n");
+        //printf("------------------\n");
 
         // Received the message if there is one
         Received_data_check(n, data_pub);
