@@ -233,9 +233,9 @@ void SetupLoRa()
 {
     
     digitalWrite(RST, HIGH);
-    delay(5);
+    delay(100);
     digitalWrite(RST, LOW);
-    delay(5);
+    delay(100);
 
     byte version = readReg(REG_VERSION);
 
@@ -246,9 +246,9 @@ void SetupLoRa()
     } else {
         // sx1276?
         digitalWrite(RST, LOW);
-        delay(5);
+        delay(100);
         digitalWrite(RST, HIGH);
-        delay(5);
+        delay(100);
         version = readReg(REG_VERSION);
         if (version == 0x12) {
             // sx1276
@@ -295,7 +295,7 @@ void SetupLoRa()
     }
     writeReg(REG_MAX_PAYLOAD_LENGTH,0x80);
     writeReg(REG_PAYLOAD_LENGTH,PAYLOAD_LENGTH);
-    writeReg(REG_HOP_PERIOD,0xFF);
+    writeReg(REG_HOP_PERIOD,0x00);
     writeReg(REG_FIFO_ADDR_PTR, readReg(REG_FIFO_RX_BASE_AD));
 
     writeReg(REG_LNA, LNA_MAX_GAIN);
@@ -361,7 +361,6 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
             if((int)receivedbytes >= 2)
             {
 
-              printf("7\n");
               if(show_data)
               {
                 printf("Packet RSSI: %d, ", readReg(0x1A)-rssicorr);
@@ -371,7 +370,6 @@ void receivepacket(ros::NodeHandle n, ros::Publisher data_pub) {
                 printf("\n");
                 printf("Payload: %s\n", message);   
               } 
-              printf("Payload: %s\n", message);  
               
               bool corrupted_message = false;
               //Convert char* to value desired
@@ -516,8 +514,9 @@ void txlora(byte *frame, byte datalen) {
     writeReg(RegDioMapping1, MAP_DIO0_LORA_TXDONE|MAP_DIO1_LORA_NOP|MAP_DIO2_LORA_NOP);
     // clear all radio IRQ flags
     writeReg(REG_IRQ_FLAGS, 0xFF);
+    
     // mask all IRQs but TxDone
-    writeReg(REG_IRQ_FLAGS_MASK, ~IRQ_LORA_TXDONE_MASK);
+    //writeReg(REG_IRQ_FLAGS_MASK, ~IRQ_LORA_TXDONE_MASK);
 
     // initialize the payload size and address pointers
     writeReg(REG_FIFO_TX_BASE_AD, 0x00);
@@ -527,9 +526,21 @@ void txlora(byte *frame, byte datalen) {
     // download buffer to the radio FIFO
     writeBuf(REG_FIFO, frame, datalen);
     // now we actually start the transmission
+
+    clock_t start, end;
+    double cpu_time_used = 0.0;
+
+    start = clock();
     opmode(OPMODE_TX);
 
-    printf("send: %s\n", frame);
+    while(!(digitalRead(dio0) == 1))
+    {
+        delay(1);
+    }
+    
+    end = clock(); 
+    cpu_time_used = ((double)(end-start)) / CLOCKS_PER_SEC;
+    printf ("Done sending in %.6lf s\n", cpu_time_used);
 }
 
 void General_setup_lora()
@@ -541,25 +552,24 @@ void General_setup_lora()
 
     wiringPiSPISetup(CHANNEL, 500000);
 
-    SetupLoRa();
+    SetupLoRa();	
     opmodeLora();
-}
-
-void Config_tx_mode()
-{
-    SetupLoRa();
-    opmodeLora();
-    opmode(OPMODE_STANDBY);
     writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
     configPower(23);
 }
 
 void Config_rx_mode()
 {
-    SetupLoRa();
-    opmodeLora();
-    opmode(OPMODE_STANDBY);
+    // clear the irq
+    writeReg(REG_IRQ_FLAGS, 0xFF);
+    // set the IRQ mapping DIO0=RxDone DIO1=NOP DIO2=NOP
+    writeReg(RegDioMapping1, MAP_DIO0_LORA_TXDONE | MAP_DIO1_LORA_NOP | MAP_DIO2_LORA_NOP);
     opmode(OPMODE_RX);
+}
+
+void Config_tx_mode()
+{
+    opmode(OPMODE_STANDBY);
 }
 
 void Call_theodolite_selected(int number_theodolite)
@@ -567,7 +577,7 @@ void Call_theodolite_selected(int number_theodolite)
     std::string data = "t"+std::to_string(number_theodolite);
     unsigned char *send_message = new unsigned char[data.length()+1];
     strcpy((char *)send_message,data.c_str());
-
+    printf("%i \n", number_theodolite);
     txlora(send_message, strlen((char *)send_message));
 }
 
@@ -648,7 +658,7 @@ int main(int argc, char **argv)
         Update_number_theodolite_called(number_theodolite_called, max_theodolite_number);
 
         // Delay to let time for the theodolite to switch mode
-        delay(time_delay);  //60 for 2
+        delay(time_delay);
 
         // Rx configuration to read the message send by the theodolite called
         Config_rx_mode();
@@ -659,8 +669,7 @@ int main(int argc, char **argv)
         Received_data_check(n, data_pub);
 
         // Update ros loop        
-        //ros::spinOnce();
-        //printf("6\n");
+        ros::spinOnce();
 
     }
 
