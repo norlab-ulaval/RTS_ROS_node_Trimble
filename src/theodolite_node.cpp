@@ -36,8 +36,8 @@ int theodolite_number = 0;
 bool received_data = false;
 bool break_iterator = false;
 bool show_data = false;
-
-
+bool synchronization_mode = false;
+float time_saved = 0;
 
 void Received_data_check()
 {
@@ -67,7 +67,44 @@ void Received_data_check()
                     if(message[0]=='t' && message[1]==('0' + theodolite_number))
                     {
                         received_data = true;
-                    }     
+                    } 
+                    if(message[0]=='p' && message[1]==('0' + theodolite_number))
+                    {
+                        received_data = true;
+                        synchronization_mode = true;
+                    }
+                    if(message[0]=='e' && message[1]==('0' + theodolite_number))
+                    {
+                        time_saved = ros::Time::now().toSec();
+                        received_data = true;
+
+                        Config_tx_mode();
+								    
+                        std::string data = "e" + std::to_string(theodolite_number) + ";";
+                        unsigned char *send_message = new unsigned char[data.length()+1];
+                        strcpy((char *)send_message, data.c_str());
+                        txlora(send_message, strlen((char *)send_message));
+                        delete send_message;
+                        
+                    }
+                    if(message[0]=='s' && message[1]==('0' + theodolite_number))
+                    {
+                        received_data = true;
+                        Config_tx_mode();
+								    
+                        std::cout << time_saved << std::endl;
+                        std::string data = "s;" + std::to_string(time_saved) + ";";
+                        unsigned char *send_message = new unsigned char[data.length()+1];
+                        strcpy((char *)send_message, data.c_str());
+                        txlora(send_message, strlen((char *)send_message));
+                        delete send_message;
+                    }
+                    if(message[0]=='c' && message[1]==('0' + theodolite_number))
+                    {
+                        received_data = true;
+                        synchronization_mode = false;
+                    }
+                       
                 }
             }
             else{
@@ -88,6 +125,19 @@ void Received_data_check()
         
     }
     
+}
+
+void Synchronization_mode()
+{
+    while(synchronization_mode == true)
+    {
+        Config_rx_mode();
+	    Received_data_check();
+        //delay(5);
+    }
+
+    Config_rx_mode();
+	Received_data_check();
 }
 
 void Check_new_observation(std::shared_ptr<ObservationListener> observation_listener, int number_of_measurements_new, int number_of_measurements_old)
@@ -120,6 +170,11 @@ void Lora_communication(int theodolite_number, double HA, double VA, double Dist
     Config_rx_mode();
 	Received_data_check();
 	Config_tx_mode();
+
+    if(synchronization_mode)
+    {
+        Synchronization_mode();
+    }
 
     //Send data to robot
 								
