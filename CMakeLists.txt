@@ -147,18 +147,19 @@ include_directories(${catkin_INCLUDE_DIRS}
         )
 
 file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*" "src/theodolite_node.cpp" "lora_radio.cpp")
-add_executable(theodolite_node ${SOURCES})
-
-target_link_libraries(theodolite_node 
-        ${catkin_LIBRARIES} 
-        ${PROJECT_LIBRARY_LINK}
-        ${LIBUSB_1_LIBRARY}
-        ${WIRINGPI_LIBRARIES}
-        )
+#add_executable(theodolite_node ${SOURCES})
 
 add_executable(theodolite_listener src/theodolite_listener.cpp src/lora_radio.cpp)
 target_link_libraries(theodolite_listener 
         ${catkin_LIBRARIES} 
+        ${WIRINGPI_LIBRARIES}
+        )
+
+add_executable(theodolite_node ${SOURCES} src/theodolite_node.cpp src/lora_radio.cpp)
+target_link_libraries(theodolite_node 
+        ${catkin_LIBRARIES} 
+        ${PROJECT_LIBRARY_LINK}
+        ${LIBUSB_1_LIBRARY}
         ${WIRINGPI_LIBRARIES}
         )
 

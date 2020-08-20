@@ -11,9 +11,9 @@
         <!-- Parameter to use LoRa antenna. Set true to use it -->
         <param name="use_lora" value= "true" />
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
-        <param name="show_data" value= "true" />
+        <param name="show_data" value= "false" />
         <!-- Parameter to test Lora communication with fake data. Doesn't need a theodolite -->
-        <param name="test_lora" value= "true" />
+        <param name="test_lora" value= "false" />
         <!-- Parameter to set the rate of the fake data -->
         <param name="test_rate" value= "10" />
 
