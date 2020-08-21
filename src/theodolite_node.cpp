@@ -37,12 +37,13 @@ bool received_data = false;
 bool break_iterator = false;
 bool show_data = false;
 bool synchronization_mode = false;
-float time_saved = 0;
+ros::Time time_saved;
 
 void Received_data_check()
 {
     std::vector<byte> message;
     std::string message_string;
+    std::string data;
 
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
@@ -75,14 +76,17 @@ void Received_data_check()
                     }
                     if(message[0]=='e' && message[1]==('0' + theodolite_number))
                     {
-                        time_saved = ros::Time::now().toSec();
-                        received_data = true;
+                        time_saved = ros::Time::now();
+        
+                        //printf("time_Ex: %d.%d \n", time_Ex.sec,time_Ex.nsec);
 
+                        received_data = true;
                         Config_tx_mode();
 								    
-                        std::string data = "e" + std::to_string(theodolite_number) + ";";
+                        data = "e"+std::to_string(theodolite_number)+";";
                         unsigned char *send_message = new unsigned char[data.length()+1];
                         strcpy((char *)send_message, data.c_str());
+                        
                         txlora(send_message, strlen((char *)send_message));
                         delete send_message;
                         
@@ -91,13 +95,14 @@ void Received_data_check()
                     {
                         received_data = true;
                         Config_tx_mode();
-								    
-                        std::cout << time_saved << std::endl;
-                        std::string data = "s;" + std::to_string(time_saved) + ";";
+
+                        data = "s;" + std::to_string(time_saved.sec) + ";" + std::to_string(time_saved.nsec) + ";";
                         unsigned char *send_message = new unsigned char[data.length()+1];
                         strcpy((char *)send_message, data.c_str());
                         txlora(send_message, strlen((char *)send_message));
                         delete send_message;
+
+                        std::cout << "Send: " << data << std::endl;
                     }
                     if(message[0]=='c' && message[1]==('0' + theodolite_number))
                     {
