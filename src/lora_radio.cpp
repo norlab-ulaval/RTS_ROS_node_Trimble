@@ -243,7 +243,7 @@ bool receivepacket(std::vector<byte>& data_out, bool& crc_ok, bool show_data) {
                 printf("SNR: %li, ", SNR);
                 printf("Length: %i", (int)receivedbytes);
                 printf("\n");
-                printf("Payload: %s\n", message);
+                printf("Payload: %.*s\n", (int)receivedbytes, message);
 	    
             }
             
