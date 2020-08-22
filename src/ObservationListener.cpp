@@ -7,10 +7,11 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include "ros/ros.h"
 
 ObservationListener::ObservationListener()
 {
-    observations = std::vector<std::vector<double>>(5, std::vector<double>());
+    observations = std::vector<std::vector<double>>(6, std::vector<double>());
     size_vector=0;
 }
 
@@ -24,7 +25,8 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
     double horizontal_angle = 0;
     double vertical_angle = 0;
     double distance = 0;
-	double timestamp = 0;
+	double timestamp_sec = 0;
+    double timestamp_nsec = 0;
     int error = 0;
 
     try
@@ -50,8 +52,11 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
 			else if ((*it)->getObservationType() == SSI::OT_TimeObservation)
 			{
 				SSI::ITimeObservation* time = (SSI::ITimeObservation*)(*it);
-                timestamp = time->getTimeUtc();
+                //timestamp = time->getTimeUtc();
                 //std::cout << "Time: " << time <<  std::endl;
+                ros::Time timeros = ros::Time::now();
+                timestamp_sec = timeros.sec;
+                timestamp_nsec = timeros.nsec;
 			}
         }
         
@@ -63,7 +68,8 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
         observations[HORIZONTAL_ANGLE_VECTOR].push_back(horizontal_angle);
         observations[VERTICAL_ANGLE_VECTOR].push_back(vertical_angle);
         observations[DISTANCE_VECTOR].push_back(distance);
-        observations[TIMESTAMP_VECTOR].push_back(timestamp);
+        observations[TIMESTAMPSEC_VECTOR].push_back(timestamp_sec);
+        observations[TIMESTAMPNSEC_VECTOR].push_back(timestamp_nsec);
         observations[ERROR].push_back(error);
         size_vector+=1;
 
@@ -89,7 +95,8 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
         observations[HORIZONTAL_ANGLE_VECTOR].push_back(-1);
         observations[VERTICAL_ANGLE_VECTOR].push_back(-1);
         observations[DISTANCE_VECTOR].push_back(-1);
-        observations[TIMESTAMP_VECTOR].push_back(-1);
+        observations[TIMESTAMPSEC_VECTOR].push_back(-1);
+        observations[TIMESTAMPNSEC_VECTOR].push_back(-1);
         observations[ERROR].push_back(error);
         size_vector+=1;
 
@@ -120,7 +127,8 @@ int ObservationListener::saveFile(std::string file_name, int precision)
 		double horizontal_angle;
 		double vertical_angle;
 		double distance;
-		double timestamp;
+		double timestamp_sec;
+        double timestamp_nsec;
         int error;
 		std::string comma = ",";
 
@@ -134,10 +142,11 @@ int ObservationListener::saveFile(std::string file_name, int precision)
 			horizontal_angle = observations[HORIZONTAL_ANGLE_VECTOR][i];
 			vertical_angle = observations[VERTICAL_ANGLE_VECTOR][i];
 			distance = observations[DISTANCE_VECTOR][i];
-			timestamp = observations[TIMESTAMP_VECTOR][i];
+			timestamp_sec = observations[TIMESTAMPSEC_VECTOR][i];
+            timestamp_nsec = observations[TIMESTAMPNSEC_VECTOR][i];
             error = observations[ERROR][i];
 
-            csv_file << horizontal_angle << comma << vertical_angle << comma << distance << comma << timestamp << comma << error << std::endl;
+            csv_file << horizontal_angle << comma << vertical_angle << comma << distance << comma << timestamp_sec << comma << timestamp_nsec << comma << error << std::endl;
 		}
 	}
 	else

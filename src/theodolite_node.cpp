@@ -30,7 +30,8 @@
 double HA;          //Horizontal angle
 double VA;          //Vertical angle
 double Dist;        //Distance
-double Time;        //Time
+double Time_sec;        //Time sec
+double Time_nsec;        //Time nsec
 int error_theodolite;   //flag for error
 int theodolite_number = 0;
 bool received_data = false;
@@ -114,17 +115,19 @@ void Received_data_check()
             }
             else{
                     ROS_WARN("Received corrupted message (bad CRC)");
-                    corrupted_message=true;       
+                    corrupted_message=true;   
+                    received_data = false;   
             }
             break;
         }
-        else{
+        else
+        {
             delay(1);
             if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(1000))
             {
-               received_data = false;
-               ROS_WARN("1000 milisec timeout");
-               break;
+                received_data = false;
+                ROS_WARN("1000 milisec timeout");
+                break;
             }
         }
         
@@ -153,8 +156,9 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
 		HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
 		VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
 		Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
-		Time = (observation_listener->getObservations())[3][number_of_measurements_new-1];
-		error_theodolite = (observation_listener->getObservations())[4][number_of_measurements_new-1];
+		Time_sec = (observation_listener->getObservations())[3][number_of_measurements_new-1];
+        Time_nsec = (observation_listener->getObservations())[4][number_of_measurements_new-1];
+		error_theodolite = (observation_listener->getObservations())[5][number_of_measurements_new-1];
 		number_of_measurements_old = number_of_measurements_new;
 
 		if(show_data)
@@ -164,32 +168,41 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
 			std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
 			std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
 			std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
-			std::cout << "TIMESTAMP_VECTOR: " << Time << std::endl;
+			std::cout << "TIMESTAMPSEC_VECTOR: " << Time_sec << std::endl;
+            std::cout << "TIMESTAMPNSEC_VECTOR: " << Time_nsec << std::endl;
 			std::cout << "ERROR: " << error_theodolite << std::endl;
 		}
 	}
 }
 
-void Lora_communication(int theodolite_number, double HA, double VA, double Dist, double Time)
+void Lora_communication(int theodolite_number, double HA, double VA, double Dist, double time_sec, double time_nsec)
 {
     Config_rx_mode();
 	Received_data_check();
 	Config_tx_mode();
 
-    if(synchronization_mode)
+    if(received_data)
     {
-        Synchronization_mode();
+
+        if(synchronization_mode)
+        {
+            Synchronization_mode();
+        }
+
+        //Send data to robot
+								    
+        //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
+
+        std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";";
+
+        std::cout << "Send: " << data << std::endl;
+        unsigned char *send_message = new unsigned char[data.length()+1];
+        strcpy((char *)send_message,data.c_str());
+        txlora(send_message, strlen((char *)send_message));
+        delete send_message;
+
+     	delay(5);
     }
-
-    //Send data to robot
-								
-    std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(Time) + ";";
-    unsigned char *send_message = new unsigned char[data.length()+1];
-    strcpy((char *)send_message,data.c_str());
-    txlora(send_message, strlen((char *)send_message));
-    delete send_message;
-
- 	delay(5);
 }
 
 //Fonction for theodolite
@@ -313,7 +326,7 @@ int main(int argc, char **argv)
 
                                 if(use_lora)
 								{
-									Lora_communication(theodolite_number, HA, VA, Dist, Time);
+									Lora_communication(theodolite_number, HA, VA, Dist, Time_sec, Time_nsec);
 								}
 								else
 								{
@@ -337,7 +350,7 @@ int main(int argc, char **argv)
 
                                 if(use_lora)
 								{
-									Lora_communication(theodolite_number, HA, VA, Dist, Time);
+									Lora_communication(theodolite_number, HA, VA, Dist, Time_sec, Time_nsec);
 								}
 								else
 								{
@@ -369,7 +382,6 @@ int main(int argc, char **argv)
 				{
 					std::cout << "Error in starting tracking" << std::endl;
 				}
-
 				
 			}
 
@@ -383,7 +395,7 @@ int main(int argc, char **argv)
 		{
 			while(ros::ok())
 			{
-                Lora_communication(1, 2.00000, 5.00000, 6.00000, .59733e+09);
+                Lora_communication(1, 2.14578, 5.58749, 6.14785, 1598131342.0, 388808162.0);
 
                 delay(5);
 		     	

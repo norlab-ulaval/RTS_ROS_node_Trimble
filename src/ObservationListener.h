@@ -11,8 +11,9 @@ enum ObservationsIndex
     HORIZONTAL_ANGLE_VECTOR = 0,
     VERTICAL_ANGLE_VECTOR = 1,
     DISTANCE_VECTOR = 2,
-    TIMESTAMP_VECTOR = 3,
-    ERROR = 4
+    TIMESTAMPSEC_VECTOR = 3,
+    TIMESTAMPNSEC_VECTOR = 4,
+    ERROR = 5
 };
 class ObservationListener : 
     public SSI::ITrackingObservationsListener
