@@ -9,7 +9,7 @@
         <param name="number_of_theodolite" value= "1" />
 
         <!-- Parameter to set the number ping for the first synchronization. Should be more than 0. -->
-        <param name="number_first_synchronization" value= "50" />
+        <param name="number_first_synchronization" value= "10" />
 
 	</node>
 </launch>
