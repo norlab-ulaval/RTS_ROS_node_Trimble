@@ -6,6 +6,7 @@
 
 #include <sstream>
 #include <chrono>
+#include <math.h>
 
 
 using namespace std;
@@ -16,14 +17,16 @@ using namespace std;
 //
 
 //Vector which will publish the data
-std::vector<double> vec_data{0,0,0,0,0};
+std::vector<double> vec_data{0,0,0,0,0,0,0,0};
 
 //Option selected in launchfile
 bool show_data = false;  //Option to see data on terminal when received
 int rate = 10;           //Rate of listener in Hz
 int number_of_theodolite = 1; //Number of theodolite used
 bool received_data = false;
-
+int number_first_synchronization = 50;
+int number_others_synchronization = 5;
+ros::Duration correction_time(0);
 
 void Call_theodolite_selected(int number_theodolite, int param)
 {
@@ -98,7 +101,7 @@ void Read_data_Synchronization(std::string &message_string, bool &corrupted_mess
     // looking for the theodolite id number
     size_t delimiter_position = message_string.find(';');
     if(delimiter_position == std::string::npos){
-        received_data = true;
+        received_data = false;
         corrupted_message=true;
     }
 
@@ -120,7 +123,7 @@ void Read_data_Synchronization(std::string &message_string, bool &corrupted_mess
         }
         catch (const std::invalid_argument & ia){
             ROS_WARN((std::string("Invalid theodolite id received!")+ia.what()).c_str());
-            received_data = true;
+            received_data = false;
             corrupted_message=true;                    
         }
     }
@@ -153,15 +156,21 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
                     {
                         // looking for the theodolite data
 
+                        ros::Time timestamp_message = ros::Time::now();
+                        timestamp_message = timestamp_message + correction_time;
+
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-      
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        vec_data[6] = timestamp_message.sec;
+                        vec_data[7] = timestamp_message.nsec;
+                        
                         std_msgs::Float64MultiArray msg;
                         msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                        msg.layout.dim[0].size = 5;
+                        msg.layout.dim[0].size = 8;
                         msg.layout.dim[0].stride =1;
 
                         vector<double>::const_iterator itr, end(vec_data.end());
@@ -171,7 +180,7 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
 
                         if(show_data)
                         {
-                           ROS_INFO("theodolite: %f ; HA: %f ; VA: %f ; Distance: %f ; Time: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4]);
+                           ROS_INFO("theodolite: %f ; HA: %f ; VA: %f ; Distance: %f ; Time theodolite sec: %f ; Time theodolite nsec: %f ; Time server sec: %f ; Time server nsec: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5], vec_data[6], vec_data[7]);
                         }
 
                         data_pub.publish(msg);        
@@ -229,15 +238,33 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                         received_data = true;
                         ros::Time new_time;
                         Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,0);
-                        Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,1);
-                        Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,2);
-                        list_data.push_back(new_time);
+                        if(!corrupted_message && received_data)
+                        {
+                            Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,1);
+                            if(!corrupted_message && received_data)
+                            {
+                                Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,2);
+                                if(!corrupted_message && received_data)
+                                {
+                                    list_data.push_back(new_time);
+                                }
+                            }
+                        } 
+                    }
+                    if(corrupted_message)
+                    {
+                        ROS_WARN("Received corrupted message (bad CRC)");
+                        corrupted_message=true;  
+                        received_data = false; 
+                        break;    
                     }
                 }
             }
             else{
                     ROS_WARN("Received corrupted message (bad CRC)");
-                    corrupted_message=true;       
+                    corrupted_message=true;  
+                    received_data = false; 
+                    break;    
             }
             break;
         }
@@ -271,32 +298,37 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
     //Loop to have Delta t
     for(int j=0; j<number_of_ping; j++)
     {
-        //Save time 
+        //Save time begin
         begin_time = ros::Time::now();
-        //printf("Begin time: %d.%d \n", begin_time.sec, begin_time.nsec);
-        time_begin_server.push_back(begin_time);
         //Send message to theodolite
         Config_tx_mode();
         Call_theodolite_selected(number_theodolite_pinged, 2);
         //Received message from theodolite
         Config_rx_mode();
         Received_data_Synchronization(time_received_theodolite);
-        //Save time 
-        end_time = ros::Time::now();
-        //printf("End time: %d.%d \n", end_time.sec, end_time.nsec);
-        time_received_server.push_back(end_time);
-        //Ask time of theodolite
-        Config_tx_mode();
-        Call_theodolite_selected(number_theodolite_pinged, 3);
-        //Receive time of theodolite
-        Config_rx_mode();
-        Received_data_Synchronization(time_received_theodolite);
+        if(received_data)
+        {
+            //Save time 
+            end_time = ros::Time::now();
+            //Ask time of theodolite
+            Config_tx_mode();
+            Call_theodolite_selected(number_theodolite_pinged, 3);
+            //Receive time of theodolite
+            Config_rx_mode();
+            Received_data_Synchronization(time_received_theodolite);
+            if(received_data)
+            {
+                time_begin_server.push_back(begin_time);
+                time_received_server.push_back(end_time);
+            }
+        }
     }  
 
     //send message to theodolite to close synchronize mode
     Config_tx_mode();
     Call_theodolite_selected(number_theodolite_pinged, 4);
 
+    /*
     printf("List 1: \n");
     for (auto v : time_begin_server)
         printf("%d.%d \n", v.sec, v.nsec);
@@ -308,6 +340,7 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
     printf("List 3: \n");
     for (auto v2 : time_received_server)
         printf("%d.%d \n", v2.sec, v2.nsec);
+    */
 
     if( (time_received_theodolite.size() == time_begin_server.size()) || (time_received_server.size() == time_begin_server.size()) )
     {
@@ -320,35 +353,42 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
             std::advance(it_rs, 1);
         }
 
+         /* 
         printf("Average server: \n");
         for (auto v3 : average_server)
             printf("%d.%d \n", v3.sec, v3.nsec);
+        */
 
-        try{
-            std::list<ros::Time>::iterator it_as = average_server.begin();
-            std::list<ros::Time>::iterator it_rt = time_received_theodolite.begin();
-            for (int i=0;i<average_server.size();i++)
-            {     
-                ros::Duration duration_ts = *it_rt - *it_as; 
-                duration_theodolite_server.push_back(duration_ts.toSec());
-                std::advance(it_as, 1);
-                std::advance(it_rt, 1);
-            }
-        }
-        catch (const std::invalid_argument & ia){
-            ROS_WARN((std::string("Error !")+ia.what()).c_str());                  
+
+        std::list<ros::Time>::iterator it_as = average_server.begin();
+        std::list<ros::Time>::iterator it_rt = time_received_theodolite.begin();
+        for (int i=0;i<average_server.size();i++)
+        {     
+            ros::Duration duration_ts = *it_rt - *it_as; 
+            duration_theodolite_server.push_back(duration_ts.toSec());
+            std::advance(it_as, 1);
+            std::advance(it_rt, 1);
         }
 
-        printf("Average server: \n");
+        /*printf("Average server: \n");
         for (auto v4 : duration_theodolite_server)
             printf("%.9f \n", v4);
+        */
 
         double avg = 0;
+        double var = 0;
         std::list<double>::iterator it;
         for(it = duration_theodolite_server.begin(); it != duration_theodolite_server.end(); it++) avg += *it;
         avg /= duration_theodolite_server.size();
 
+        for(it = duration_theodolite_server.begin(); it != duration_theodolite_server.end(); it++) var += pow(*it-avg,2);
+        var /= duration_theodolite_server.size();
+
+        printf("Number of ping analyzed: %i \n", duration_theodolite_server.size());
         printf("Average value: %0.9f \n", avg);
+        printf("Standard value: %0.9f \n", pow(var, 0.5));
+
+        correction_time = ros::Duration(avg);
         
     }
     else
@@ -382,6 +422,8 @@ int main(int argc, char **argv)
     //Get number of theodolite involved
     n.getParam("/theodolite_listener/number_of_theodolite", number_of_theodolite);
     n.getParam("/theodolite_listener/show_data", show_data);
+    n.getParam("/theodolite_listener/number_first_synchronization", number_first_synchronization);
+    n.getParam("/theodolite_listener/number_others_synchronization", number_others_synchronization);
 
     //Configure LoRa antenna
     General_setup_lora();
@@ -401,7 +443,7 @@ int main(int argc, char **argv)
 
     for(int i=0;i<max_theodolite_number;i++)
     {
-        Synchronization_call(50, i+1);
+        Synchronization_call(number_first_synchronization, i+1);
     }
     printf("End synchronization of time \n");
 
