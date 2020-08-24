@@ -18,6 +18,7 @@ using namespace std;
 
 //Vector which will publish the data
 std::vector<double> vec_data{0,0,0,0,0,0};
+std::vector<ros::Duration> vec_correction{ros::Duration(0), ros::Duration(0), ros::Duration(0)};
 
 //Option selected in launchfile
 bool show_data = false;  //Option to see data on terminal when received
@@ -25,8 +26,9 @@ int rate = 10;           //Rate of listener in Hz
 int number_of_theodolite = 1; //Number of theodolite used
 bool received_data = false;
 int number_first_synchronization = 50;
+int delay_synchronization_theodolite = 300;
+int delay_synchronization_between_theodolite = 10;
 int number_others_synchronization = 5;
-ros::Duration correction_time(0);
 
 void Call_theodolite_selected(int number_theodolite, int param)
 {
@@ -51,7 +53,6 @@ void Call_theodolite_selected(int number_theodolite, int param)
     {
         data = "c"+std::to_string(number_theodolite);
     }
-    std::cout << "Send: " << data << std::endl;
     unsigned char *send_message = new unsigned char[data.length()+1];
     strcpy((char *)send_message,data.c_str());
     txlora(send_message, strlen((char *)send_message));
@@ -130,7 +131,7 @@ void Read_data_Synchronization(std::string &message_string, bool &corrupted_mess
     }
 }
 
-void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
+void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 {
     std::vector<byte> message;
     std::string message_string;
@@ -150,8 +151,6 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
                 for(int i=0; i < receivedbytes; i++){
                     message_string.push_back(message[i]);
                 } 
-            
-                std::cout << message_string << std::endl;
 
                 if(receivedbytes >= 2)
                 {
@@ -159,16 +158,14 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
                     {
                         // looking for the theodolite data
                         
-
                         ros::Time timestamp_message = ros::Time::now();
-                        timestamp_message = timestamp_message + correction_time;
+                        timestamp_message = timestamp_message + vec_correction[number_theodolite_called-1];
 
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
                         Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+
                         vec_data[4] = timestamp_message.sec;
                         vec_data[5] = timestamp_message.nsec;
                         
@@ -184,10 +181,8 @@ void Received_data_check(ros::NodeHandle n, ros::Publisher data_pub)
 
                         if(show_data)
                         {
-                           //ROS_INFO("theodolite: %f ; HA: %f ; VA: %f ; Distance: %f ; Time theodolite sec: %f ; Time theodolite nsec: %f ; Time server sec: %f ; Time server nsec: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5], vec_data[6], vec_data[7]);
                             ROS_INFO("theodolite: %f ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %f ; Time server nsec: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5]);
                         }
-
                         data_pub.publish(msg);        
                     }               
                 }
@@ -258,7 +253,7 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                     }
                     if(corrupted_message)
                     {
-                        ROS_WARN("Received corrupted message (bad CRC)");
+                        ROS_WARN("Received corrupted message (bad CRC) !");
                         corrupted_message=true;  
                         received_data = false; 
                         break;    
@@ -266,7 +261,7 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                 }
             }
             else{
-                    ROS_WARN("Received corrupted message (bad CRC)");
+                    ROS_WARN("Received corrupted message (bad CRC) !");
                     corrupted_message=true;  
                     received_data = false; 
                     break;    
@@ -287,9 +282,8 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
     
 }
 
-void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
+void Synchronization_call(int number_of_ping, int number_theodolite_pinged, ros::Publisher correction_pub, int param)
 {
-
     ros::Time begin_time;
     ros::Time end_time;
 
@@ -333,21 +327,7 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
     Config_tx_mode();
     Call_theodolite_selected(number_theodolite_pinged, 4);
 
-    /*
-    printf("List 1: \n");
-    for (auto v : time_begin_server)
-        printf("%d.%d \n", v.sec, v.nsec);
-
-    printf("List 2: \n");
-    for (auto v1 : time_received_theodolite)
-        printf("%d.%d \n", v1.sec, v1.nsec);
-
-    printf("List 3: \n");
-    for (auto v2 : time_received_server)
-        printf("%d.%d \n", v2.sec, v2.nsec);
-    */
-
-    if( (time_received_theodolite.size() == time_begin_server.size()) || (time_received_server.size() == time_begin_server.size()) )
+    if( ((time_received_theodolite.size() == time_begin_server.size()) || (time_received_server.size() == time_begin_server.size())) && time_received_theodolite.size()>0 && time_begin_server.size()>0 && time_received_server.size()>0 )
     {
         std::list<ros::Time>::iterator it_bs = time_begin_server.begin();
         std::list<ros::Time>::iterator it_rs = time_received_server.begin();
@@ -357,13 +337,6 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
             std::advance(it_bs, 1);
             std::advance(it_rs, 1);
         }
-
-         /* 
-        printf("Average server: \n");
-        for (auto v3 : average_server)
-            printf("%d.%d \n", v3.sec, v3.nsec);
-        */
-
 
         std::list<ros::Time>::iterator it_as = average_server.begin();
         std::list<ros::Time>::iterator it_rt = time_received_theodolite.begin();
@@ -375,11 +348,6 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
             std::advance(it_rt, 1);
         }
 
-        /*printf("Average server: \n");
-        for (auto v4 : duration_theodolite_server)
-            printf("%.9f \n", v4);
-        */
-
         double avg = 0;
         double var = 0;
         std::list<double>::iterator it;
@@ -389,20 +357,40 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged)
         for(it = duration_theodolite_server.begin(); it != duration_theodolite_server.end(); it++) var += pow(*it-avg,2);
         var /= duration_theodolite_server.size();
 
-        printf("Number of ping analyzed: %i \n", duration_theodolite_server.size());
-        printf("Average value: %0.9f \n", avg);
-        printf("Standard value: %0.9f \n", pow(var, 0.5));
+        ROS_INFO("Number of ping analyzed: %i", duration_theodolite_server.size());
+        ROS_INFO("Average value (s): %0.9f", avg);
+        ROS_INFO("Standard value (s): %0.9f", pow(var, 0.5));
 
-        correction_time = ros::Duration(avg);
+        //Update correction
+        if(param ==1 && vec_correction[number_theodolite_pinged-1].toSec()!=0)
+        {
+            vec_correction[number_theodolite_pinged-1] = ros::Duration(avg*0.1) + ros::Duration(vec_correction[number_theodolite_pinged-1].toSec()*0.9);
+        }
+        else
+        {
+            vec_correction[number_theodolite_pinged-1] = ros::Duration(avg);
+        }
+
+        std_msgs::Float64MultiArray msg;
+        msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
+        msg.layout.dim[0].size = 4;
+        msg.layout.dim[0].stride =1;
+
+        ros::Time timestamp = ros::Time::now();
+        msg.data.push_back(timestamp.sec);
+        msg.data.push_back(timestamp.nsec);
+        msg.data.push_back((double) number_theodolite_pinged);
+        msg.data.push_back(vec_correction[number_theodolite_pinged-1].toSec());
+
+        correction_pub.publish(msg);        
         
     }
     else
     {
-        ROS_WARN("Synchronization failed ! Bad number of data.");
+        ROS_WARN("Synchronization failed! Bad number of data.");
     }
     
 }
-
 
 
 // #############################################
@@ -416,6 +404,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n;
     //Publisher of the data in a vector
     ros::Publisher data_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_data", 10);
+    ros::Publisher correction_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_correction_timestamp", 10);
     n.getParam("/theodolite_listener/rate", rate);
     //Set the rate of the listener
     if(rate >100 or rate<1)
@@ -429,10 +418,11 @@ int main(int argc, char **argv)
     n.getParam("/theodolite_listener/show_data", show_data);
     n.getParam("/theodolite_listener/number_first_synchronization", number_first_synchronization);
     n.getParam("/theodolite_listener/number_others_synchronization", number_others_synchronization);
+    n.getParam("/theodolite_listener/delay_synchronization_theodolite", delay_synchronization_theodolite);
+    n.getParam("/theodolite_listener/delay_synchronization_between_theodolite", delay_synchronization_between_theodolite);
 
     //Configure LoRa antenna
     General_setup_lora();
-
 
     printf("------------------\n");
 
@@ -440,21 +430,60 @@ int main(int argc, char **argv)
     int number_theodolite_called=1;
     int max_theodolite_number = number_of_theodolite;
 
-    ros::Time exemple_time = ros::Time::now();
-    printf("%d \n",exemple_time.sec);
-    printf("%d \n",exemple_time.nsec);
-
-    printf("Begin synchronization of time");
+    //Main synchronization for theodolites
+    ROS_INFO("Begin synchronization of time for all theodolites !");
+    delay(100);
 
     for(int i=0;i<max_theodolite_number;i++)
     {
-        Synchronization_call(number_first_synchronization, i+1);
+        Synchronization_call(number_first_synchronization, i+1, correction_pub, 0);
     }
-    printf("End synchronization of time \n");
+    ROS_INFO("End synchronization of time !");
+
+    std::chrono::steady_clock::time_point start_time = std::chrono::steady_clock::now();
+    bool start_others_synchronization = false;
+    int iterator_synchronization = 0;
+
+    ROS_INFO("Start calling theodolites.");
 
     //Listen messages sent
     while (ros::ok())
     {
+        //Check if synchronization nedded
+        if(start_others_synchronization == false)
+        {
+            if(std::chrono::steady_clock::now() - start_time > std::chrono::seconds(delay_synchronization_theodolite))
+            {
+                start_others_synchronization = true;
+                ROS_INFO("Begin synchronization for theodolite %i", iterator_synchronization+1);
+                Synchronization_call(number_others_synchronization, iterator_synchronization+1, correction_pub, 1);
+                ROS_INFO("End synchronization for theodolite %i", iterator_synchronization+1);
+                iterator_synchronization++;
+                start_time = std::chrono::steady_clock::now();
+                if(max_theodolite_number == 1)
+                {
+                    iterator_synchronization = 0;
+                    start_others_synchronization = false;
+                } 
+            }
+        }
+        if(start_others_synchronization == true)
+        {
+            if(std::chrono::steady_clock::now() - start_time > std::chrono::seconds(delay_synchronization_between_theodolite))
+            {
+                ROS_INFO("Begin synchronization for theodolite %i", iterator_synchronization+1);
+                Synchronization_call(number_others_synchronization, iterator_synchronization+1, correction_pub, 1);
+                ROS_INFO("End synchronization for theodolite %i", iterator_synchronization+1);
+                iterator_synchronization++;
+                start_time = std::chrono::steady_clock::now();
+                if(max_theodolite_number == iterator_synchronization)
+                {
+                    iterator_synchronization = 0;
+                    start_others_synchronization = false;
+                }   
+            }
+        }
+
         // Tx configuration to call theodolite targeted
         Config_tx_mode();
         // Send message to all theodolite, and by the same time call the one we want
@@ -462,11 +491,12 @@ int main(int argc, char **argv)
         // Rx configuration to read the message send by the theodolite called
         Config_rx_mode();
        
-        // Update the theodolite called for later
-        Update_number_theodolite_called(number_theodolite_called, max_theodolite_number);
         // Received the message if there is one
         received_data = false;
-        Received_data_check(n, data_pub);
+        Received_data_check(data_pub, number_theodolite_called);
+
+        // Update the theodolite called for later
+        Update_number_theodolite_called(number_theodolite_called, max_theodolite_number);
 
         // Delay to let time for the theodolite to switch mode
         delay(10);
