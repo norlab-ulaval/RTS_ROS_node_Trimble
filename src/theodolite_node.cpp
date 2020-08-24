@@ -82,12 +82,10 @@ void Received_data_check()
                         //printf("time_Ex: %d.%d \n", time_Ex.sec,time_Ex.nsec);
 
                         received_data = true;
-                        Config_tx_mode();
-								    
+                        Config_tx_mode();		    
                         data = "e"+std::to_string(theodolite_number)+";";
                         unsigned char *send_message = new unsigned char[data.length()+1];
                         strcpy((char *)send_message, data.c_str());
-                        
                         txlora(send_message, strlen((char *)send_message));
                         delete send_message;
                         
@@ -96,14 +94,11 @@ void Received_data_check()
                     {
                         received_data = true;
                         Config_tx_mode();
-
                         data = "s;" + std::to_string(time_saved.sec) + ";" + std::to_string(time_saved.nsec) + ";";
                         unsigned char *send_message = new unsigned char[data.length()+1];
                         strcpy((char *)send_message, data.c_str());
                         txlora(send_message, strlen((char *)send_message));
                         delete send_message;
-
-                        std::cout << "Send: " << data << std::endl;
                     }
                     if(message[0]=='c' && message[1]==('0' + theodolite_number))
                     {
@@ -141,9 +136,7 @@ void Synchronization_mode()
     {
         Config_rx_mode();
 	    Received_data_check();
-        //delay(5);
     }
-
     Config_rx_mode();
 	Received_data_check();
 }
@@ -164,13 +157,13 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
 		if(show_data)
 		{
 			//Print data of measurement
-			std::cout << number_of_measurements_new << " measurements taken" << std::endl;
-			std::cout << "HORIZONTAL_ANGLE_VECTOR: " << HA << std::endl;
-			std::cout << "VERTICAL_ANGLE_VECTOR: " << VA << std::endl;
-			std::cout << "DISTANCE_VECTOR: " << Dist << std::endl;
-			std::cout << "TIMESTAMPSEC_VECTOR: " << Time_sec << std::endl;
-            std::cout << "TIMESTAMPNSEC_VECTOR: " << Time_nsec << std::endl;
-			std::cout << "ERROR: " << error_theodolite << std::endl;
+            ROS_INFO("%i  measurements taken", number_of_measurements_new);
+            ROS_INFO("HORIZONTAL_ANGLE_VECTOR: %f", HA);
+            ROS_INFO("VERTICAL_ANGLE_VECTOR: %f", VA);
+            ROS_INFO("DISTANCE_VECTOR: %f", Dist);
+            ROS_INFO("TIMESTAMPSEC_VECTOR: %f", Time_sec);
+            ROS_INFO("TIMESTAMPNSEC_VECTOR: %f", Time_nsec);
+            ROS_INFO("ERROR: %i", error_theodolite);
 		}
 	}
 }
@@ -186,16 +179,13 @@ void Lora_communication(int theodolite_number, double HA, double VA, double Dist
 
         if(synchronization_mode)
         {
+            ROS_INFO("Synchronization asked!");
             Synchronization_mode();
+            ROS_INFO("End of synchronization!");
         }
 
         //Send data to robot
-								    
-        //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
-
         std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";";
-
-        std::cout << "Send: " << data << std::endl;
         unsigned char *send_message = new unsigned char[data.length()+1];
         strcpy((char *)send_message,data.c_str());
         txlora(send_message, strlen((char *)send_message));
@@ -243,10 +233,9 @@ int main(int argc, char **argv)
         //Initialize the connection with LoRa antenna if needed
         if(use_lora or test_lora)
         {
-            printf("Starting LoRa antenna\n");
+            ROS_INFO("Starting LoRa antenna");
 
             General_setup_lora();
-            printf("------------------\n");
         }
 
 		// If no test with fake data
@@ -255,53 +244,54 @@ int main(int argc, char **argv)
         
 			if(theodolite_number < 1 or theodolite_number > 8)
 			{
-          		printf("Error in setting of theodolite number! Number should be between 1 and 8 \n");
+                ROS_WARN("Error in setting of theodolite number! Number should be between 1 and 8.");
             	break_iterator = true;
 			}
 
 			if(target_prism > 8 or target_prism < 1)
 			{
-				std::cout << "Wrong target prism number! Change the value to begin. Should be between 1 and 8" << std::endl;
+                ROS_WARN("Wrong target prism number! Change the value to begin. Should be between 1 and 8.");
             	break_iterator = true;
 			}
 
 			if(number_of_measurements_choice < 0)
 			{
-				std::cout << "Wrong number of measurements! Change the value to begin. Should be 0 or higher" << std::endl;
+                ROS_WARN("Wrong number of measurements! Change the value to begin. Should be 0 or higher.");
 				break_iterator = true;
 			}
 
-			std::cout << "Target prism acquired is: " << target_prism << std::endl;
+            ROS_INFO("Target prism acquired is: %i", target_prism);
 			if(number_of_measurements_choice != 0)
-				std::cout << "Number of measurements decided is: " << number_of_measurements_choice << std::endl;
+                ROS_INFO("Number of measurements decided is: %i", number_of_measurements_choice);
 			else
-				std::cout << "Number of measurements decided is infinite !" << std::endl;
+                ROS_INFO("Number of measurements decided is infinite !");
                       
 			//Load driver of the theodolite
 			SsiInstrument& instrument = SsiInstrument::GetInstrument();
 			instrument.LoadDriver();
 
-			std::cout << "Loaded driver" << std::endl;	
-			std::cout << "Connecting..." << std::endl;
+            ROS_INFO("Loaded driver");
+            ROS_INFO("Connecting...");
 
 			//Connect to the theodolite
 			int err = instrument.Connect();
 			if(err)	
 			{
-				std::cout << "Error during connection: " << err << std::endl;
+                ROS_WARN("Error during connection!");
+				std::cout << err << std::endl;
                           
 				//Disconnect driver of theodolite
 				instrument.FreeDriver();
 
-				std::cout << "Unloaded driver" << std::endl;
-				std::cout << "Terminating program" << std::endl;
+                ROS_INFO("Unloaded driver");
+                ROS_INFO("Terminating program");
 	            break_iterator = true;
 			}
 
 			if(break_iterator == false)
 			{
 
-				std::cout << "Intrument connected" << std::endl;
+                ROS_INFO("Intrument connected");
 			              
 				//Select Multitrack mode with the proper prism number
 				instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism);
@@ -314,7 +304,7 @@ int main(int argc, char **argv)
 					int number_of_measurements_new = 0;   //New number of measurments
 					int number_of_measurements_old = 0;   //Old number of measurments
 		                          
-					std::cout << "Started measuring" << std::endl;
+                    ROS_INFO("Started measuring");
 
 					if(number_of_measurements_choice == 0)  //Case we want not stop measurements
 					{
@@ -336,7 +326,7 @@ int main(int argc, char **argv)
 							}
 							catch(std::exception& e)
 							{
-								printf("%s\n", e.what());
+								ROS_WARN("%s\n", e.what());
 							}
 						}
 					}
@@ -359,12 +349,12 @@ int main(int argc, char **argv)
 							}
 							catch(std::exception& e)
 							{
-								printf("%s\n", e.what());
+                                ROS_WARN("%s\n", e.what());
 							}
 						}
 					}
 					//Stop measurement when it's finished
-					std::cout << "Stopped measuring" << std::endl;
+                    ROS_INFO("Stopped measuring");
 					instrument.Tracking(false, observation_listener.get());
 
 					//Save data in file if asked
@@ -374,22 +364,22 @@ int main(int argc, char **argv)
 					{
 						std::string file_measurements;
 						n.getParam("/theodolite_node/file_measurements", file_measurements);
-						std::cout << "Save measurements in " << file_measurements << std::endl;
+                        ROS_INFO("Save measurements in %s", file_measurements.c_str());
 						observation_listener->saveFile(file_measurements, 10);
 					}
 				}
 				else
 				{
-					std::cout << "Error in starting tracking" << std::endl;
+                    ROS_WARN("Error in starting tracking");
 				}
 				
 			}
 
             //Disconnect of the theodolite and remove driver
-	        std::cout << "Disconnecting..." << std::endl;
+            ROS_INFO("Disconnecting...");
 	        instrument.FreeDriver();
-	        std::cout << "Unloaded driver" << std::endl;
-	        std::cout << "Terminating program" << std::endl;
+            ROS_INFO("Unloaded driver");
+            ROS_INFO("Terminating program");
 		}
 		else
 		{
