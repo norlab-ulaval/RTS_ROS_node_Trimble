@@ -72,7 +72,7 @@ void Read_data(std::string &message_string, bool &corrupted_message, bool &recei
 {
     std::string single_word_string;
 
-    // looking for the theodolite id number
+    // looking for the theodolite data and split message
     size_t delimiter_position = message_string.find(';');
     if(delimiter_position == std::string::npos){
         received_data = true;
@@ -85,11 +85,11 @@ void Read_data(std::string &message_string, bool &corrupted_message, bool &recei
         message_string = message_string.substr(delimiter_position+1, std::string::npos);
 
         try{
-            vec_data[iterator_vector] = (double) stof(single_word_string);  
+            vec_data[iterator_vector] = stod(single_word_string); 
             iterator_vector++;  
         }
         catch (const std::invalid_argument & ia){
-            ROS_WARN((std::string("Invalid theodolite id received!")+ia.what()).c_str());
+            ROS_WARN((std::string("Invalid theodolite message received!")+ia.what()).c_str());
             received_data = true;
             corrupted_message=true;                    
         }
@@ -167,11 +167,12 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 
                         //vec_data[4] = timestamp_message.sec;
                         //vec_data[5] = timestamp_message.nsec;
-                
+
                         ros::Time timestamp_message;
                         timestamp_message.sec = vec_data[4];
                         timestamp_message.nsec = vec_data[5];
-                        timestamp_message = timestamp_message + vec_correction[number_theodolite_called-1];
+
+                        timestamp_message = timestamp_message - vec_correction[number_theodolite_called-1];
 
                         vec_data[4] = timestamp_message.sec;
                         vec_data[5] = timestamp_message.nsec;
@@ -202,10 +203,10 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
         }
         else{
             delay(1);
-            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(100))
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200))
             {
                received_data = false;
-               ROS_WARN("100 milisec timeout");
+               ROS_WARN("200 milisec timeout");
                break;
             }
         }
@@ -277,10 +278,10 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
         }
         else{
             delay(1);
-            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(100))
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200))
             {
                received_data = false;
-               ROS_WARN("100 milisec timeout");
+               ROS_WARN("200 milisec timeout");
                break;
             }
         }
