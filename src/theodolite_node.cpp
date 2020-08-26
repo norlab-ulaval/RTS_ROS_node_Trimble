@@ -191,9 +191,9 @@ void Lora_communication(int theodolite_number, double HA, double VA, double Dist
 
         //Send data to robot
 								    
-        //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
+        std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
 
-        std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";";
+        //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";";
 
         std::cout << "Send: " << data << std::endl;
         unsigned char *send_message = new unsigned char[data.length()+1];

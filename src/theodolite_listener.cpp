@@ -158,20 +158,27 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                     {
                         // looking for the theodolite data
                         
-                        ros::Time timestamp_message = ros::Time::now();
-                        timestamp_message = timestamp_message + vec_correction[number_theodolite_called-1];
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
 
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //vec_data[4] = timestamp_message.sec;
+                        //vec_data[5] = timestamp_message.nsec;
+                
+                        ros::Time timestamp_message;
+                        timestamp_message.sec = vec_data[4];
+                        timestamp_message.nsec = vec_data[5];
+                        timestamp_message = timestamp_message + vec_correction[number_theodolite_called-1];
 
                         vec_data[4] = timestamp_message.sec;
                         vec_data[5] = timestamp_message.nsec;
                         
                         std_msgs::Float64MultiArray msg;
                         msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                        msg.layout.dim[0].size = 8;
+                        msg.layout.dim[0].size = 6;
                         msg.layout.dim[0].stride =1;
 
                         vector<double>::const_iterator itr, end(vec_data.end());
