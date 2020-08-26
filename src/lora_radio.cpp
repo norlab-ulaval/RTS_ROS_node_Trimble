@@ -333,6 +333,16 @@ bool txlora(byte *frame, byte datalen, int timeout) {
     else return false;
 }
 
+bool txlora(std::string & data, int timeout){
+    bool ret_val;
+    unsigned char *send_message = new unsigned char[data.length()+1];
+    strcpy((char *)send_message, data.c_str());
+
+    ret_val = txlora(send_message, strlen((char *)send_message), timeout);
+    delete send_message;
+    return ret_val;
+}
+
 void General_setup_lora()
 {
     wiringPiSetup () ;

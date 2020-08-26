@@ -5,6 +5,9 @@
 
 #include <string>
 #include <vector>
+#include <mutex>
+
+
 
 enum ObservationsIndex
 {
@@ -37,6 +40,7 @@ private:
 
     std::vector<std::vector<double>> observations;
     int size_vector;
+    std::mutex m;
 
 };
 

@@ -159,6 +159,7 @@ enum sf_t { SF7=7, SF8, SF9, SF10, SF11, SF12 };
 
 bool receivepacket(std::vector<byte>& data_out, bool& crc_ok, bool show_data);
 bool txlora(byte *frame, byte datalen, int timeout = 1000);
+bool txlora(std::string & data, int timeout = 1000);
 void General_setup_lora();
 void Config_rx_mode();
 void Config_tx_mode();

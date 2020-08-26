@@ -65,13 +65,16 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
             error = 4;
         }
 
-        observations[HORIZONTAL_ANGLE_VECTOR].push_back(horizontal_angle);
-        observations[VERTICAL_ANGLE_VECTOR].push_back(vertical_angle);
-        observations[DISTANCE_VECTOR].push_back(distance);
-        observations[TIMESTAMPSEC_VECTOR].push_back(timestamp_sec);
-        observations[TIMESTAMPNSEC_VECTOR].push_back(timestamp_nsec);
-        observations[ERROR].push_back(error);
-        size_vector+=1;
+        {
+            std::lock_guard<std::mutex> guard(m);
+            observations[HORIZONTAL_ANGLE_VECTOR].push_back(horizontal_angle);
+            observations[VERTICAL_ANGLE_VECTOR].push_back(vertical_angle);
+            observations[DISTANCE_VECTOR].push_back(distance);
+            observations[TIMESTAMPSEC_VECTOR].push_back(timestamp_sec);
+            observations[TIMESTAMPNSEC_VECTOR].push_back(timestamp_nsec);
+            observations[ERROR].push_back(error);
+            size_vector+=1;
+        }
 
     }
     catch(SSI::InvalidTrackingObservationsException&e )
@@ -92,13 +95,16 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
             error = 3;
         }
 
-        observations[HORIZONTAL_ANGLE_VECTOR].push_back(-1);
-        observations[VERTICAL_ANGLE_VECTOR].push_back(-1);
-        observations[DISTANCE_VECTOR].push_back(-1);
-        observations[TIMESTAMPSEC_VECTOR].push_back(-1);
-        observations[TIMESTAMPNSEC_VECTOR].push_back(-1);
-        observations[ERROR].push_back(error);
-        size_vector+=1;
+        {
+            std::lock_guard<std::mutex> guard(m);
+            observations[HORIZONTAL_ANGLE_VECTOR].push_back(-1);
+            observations[VERTICAL_ANGLE_VECTOR].push_back(-1);
+            observations[DISTANCE_VECTOR].push_back(-1);
+            observations[TIMESTAMPSEC_VECTOR].push_back(-1);
+            observations[TIMESTAMPNSEC_VECTOR].push_back(-1);
+            observations[ERROR].push_back(error);
+            size_vector+=1;
+        }
 
         printf("Tracking: %s due to %s\n", e.what(), reason);
 
@@ -107,11 +113,13 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
 
 std::vector<std::vector<double>> ObservationListener::getObservations()
 {
+    std::lock_guard<std::mutex> guard(m);
     return observations;
 }
 
 int ObservationListener::getSizeVector()
 {
+    std::lock_guard<std::mutex> guard(m);
     return size_vector;
 }
 
