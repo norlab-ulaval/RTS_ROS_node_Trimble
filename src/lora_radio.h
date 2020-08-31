@@ -12,16 +12,16 @@
 
 
 #include <string>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+//#include <stdio.h>			// all these includes come from the example draghino code, but are not used, apparently
+//#include <sys/types.h>
+//#include <sys/socket.h>
+//#include <arpa/inet.h>
 #include <string.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
+//#include <sys/time.h>
+//#include <signal.h>
+//#include <stdlib.h>
+//#include <unistd.h>
+//#include <sys/ioctl.h>
 #include <wiringPi.h>
 #include <wiringPiSPI.h>
 #include <vector>
@@ -160,6 +160,7 @@ enum sf_t { SF7=7, SF8, SF9, SF10, SF11, SF12 };
 bool receivepacket(std::vector<byte>& data_out, bool& crc_ok, bool show_data);
 bool txlora(byte *frame, byte datalen, int timeout = 1000);
 bool txlora(std::string & data, int timeout = 1000);
+bool txlora(std::vector<byte>& data_in, int timeout = 1000);
 void General_setup_lora();
 void Config_rx_mode();
 void Config_tx_mode();

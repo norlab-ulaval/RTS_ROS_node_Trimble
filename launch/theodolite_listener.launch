@@ -4,9 +4,9 @@
         <!-- Parameter to set the rate of the listener. Should be between 1 and 100Hz -->
         <param name="rate" value= "5" />        
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
-        <param name="show_data" value= "false" />
+        <param name="show_data" value= "true" />
         <!-- Parameter to set the number of theodolite used. Should be more than 0. -->
-        <param name="number_of_theodolite" value= "1" />
+        <param name="number_of_theodolite" value= "3" />
 
         <!-- Parameter to set the number ping for the first synchronization. Should be more than 0. -->
         <param name="number_first_synchronization" value= "50" />

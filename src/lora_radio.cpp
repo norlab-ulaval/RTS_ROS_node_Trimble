@@ -343,6 +343,23 @@ bool txlora(std::string & data, int timeout){
     return ret_val;
 }
 
+
+bool txlora(std::vector<byte>& data_in, int timeout){
+    bool ret_val;
+    size_t num_of_bytes = data_in.size();
+    unsigned char *send_message = new unsigned char[num_of_bytes];
+    
+    for(int i = 0; i < num_of_bytes; i++){
+        send_message[i] = data_in[i];    
+    }
+
+    ret_val = txlora(send_message, num_of_bytes, timeout);
+    delete send_message;
+    return ret_val;
+}
+
+
+
 void General_setup_lora()
 {
     wiringPiSetup () ;

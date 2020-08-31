@@ -1,11 +1,12 @@
 //For ros
 #include "ros/ros.h"
 #include "std_msgs/String.h"
-
-#include "lora_radio.h"
-
 #include <sstream>
 #include <chrono>
+
+//For radio
+#include "lora_radio.h"
+#include "radio_message_serialize.h"
 
 
 //For theodolite
@@ -174,7 +175,7 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
 	}
 }
 
-void Lora_communication(int theodolite_number, double HA, double VA, double Dist, double time_sec, double time_nsec)
+void Lora_communication(int theodolite_number, int error_theodolite, double HA, double VA, double Dist, double time_sec, double time_nsec)
 {
     Received_data_check();
 	
@@ -184,8 +185,14 @@ void Lora_communication(int theodolite_number, double HA, double VA, double Dist
         {
 			Config_tx_mode();            
 			//Send data to robot
-        	std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
-        	txlora(data);
+            
+            //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
+            //txlora(data);
+
+            std::vector<byte> data_binary;
+            pack_theodolite_message_to_bytes(data_binary, (byte) theodolite_number, (byte) error_theodolite, VA, HA, Dist, (uint32_t) time_sec, (uint32_t) time_nsec);
+            txlora(data_binary);
+
      		Config_rx_mode();
 		}
     }
@@ -307,7 +314,7 @@ int main(int argc, char **argv)
 
         			if(use_lora)
 					{
-						Lora_communication(theodolite_number, HA, VA, Dist, Time_sec, Time_nsec);
+						Lora_communication(theodolite_number, error_theodolite, HA, VA, Dist, Time_sec, Time_nsec);
 					}
 					else
 					{
@@ -359,7 +366,7 @@ int main(int argc, char **argv)
 	{
 		while(ros::ok())
 		{
-    	    Lora_communication(1, 2.14578, 5.58749, 6.14785, 1598131342.0, 388808162.0);
+    	    Lora_communication(1, 0, 2.14578, 5.58749, 6.14785, 1598131342.0, 388808162.0);
             delay(5);
 		     	
             ros::spinOnce();

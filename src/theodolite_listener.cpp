@@ -3,6 +3,7 @@
 #include "std_msgs/Float64MultiArray.h"
 
 #include "lora_radio.h"
+#include "radio_message_serialize.h"
 
 #include <sstream>
 #include <chrono>
@@ -17,7 +18,7 @@ using namespace std;
 //
 
 //Vector which will publish the data
-std::vector<double> vec_data{0,0,0,0,0,0};
+//std::vector<double> vec_data{0,0,0,0,0,0};
 std::vector<ros::Duration> vec_correction{ros::Duration(0), ros::Duration(0), ros::Duration(0)};
 
 //Option selected in launchfile
@@ -53,10 +54,8 @@ void Call_theodolite_selected(int number_theodolite, int param)
     {
         data = "c"+std::to_string(number_theodolite);
     }
-    unsigned char *send_message = new unsigned char[data.length()+1];
-    strcpy((char *)send_message,data.c_str());
-    txlora(send_message, strlen((char *)send_message));
-    delete send_message;
+    
+    txlora(data);
 }
 
 void Update_number_theodolite_called(int &number_theodolite, int max_theodolite_number)
@@ -68,6 +67,7 @@ void Update_number_theodolite_called(int &number_theodolite, int max_theodolite_
     }
 }
 
+/*
 void Read_data(std::string &message_string, bool &corrupted_message, bool &received_data, std::vector<double> &vec_data, int &iterator_vector)
 {
     std::string single_word_string;
@@ -95,6 +95,7 @@ void Read_data(std::string &message_string, bool &corrupted_message, bool &recei
         }
     }
 }
+*/
 
 void Read_data_Synchronization(std::string &message_string, bool &corrupted_message, bool &received_data, ros::Time &time, int param)
 {
@@ -140,17 +141,29 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
     bool corrupted_message = false;
     int iterator_vector = 0;
 
+    byte status;
+    byte theodolite_number;
+    double elevation;
+    double azimuth;
+    double distance;
+    uint32_t secs;
+    uint32_t nsecs;
+
+    double corrected_secs;
+    double corrected_nsecs;
+
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     received_data = false;
     while(received_data == false)
     {
         if(receivepacket(message, data_CRC_ok, show_data)){
             if(data_CRC_ok){
+                
                 // Copy the bytes into a string
 			    receivedbytes = message.size();
-                for(int i=0; i < receivedbytes; i++){
-                    message_string.push_back(message[i]);
-                } 
+                //for(int i=0; i < receivedbytes; i++){
+                //    message_string.push_back(message[i]);
+                //} 
 
                 if(receivedbytes >= 2)
                 {
@@ -158,38 +171,55 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                     {
                         // looking for the theodolite data
                         
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
+                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
 
-                        //vec_data[4] = timestamp_message.sec;
-                        //vec_data[5] = timestamp_message.nsec;
-
+                        corrupted_message = !( unpack_theodolite_message_from_bytes(message,
+                                                                                   theodolite_number,
+                                                                                   status,
+                                                                                   elevation,
+                                                                                   azimuth,
+                                                                                   distance,
+                                                                                   secs,
+                                                                                   nsecs) );
+                        
                         ros::Time timestamp_message;
-                        timestamp_message.sec = vec_data[4];
-                        timestamp_message.nsec = vec_data[5];
+                        timestamp_message.sec = secs;
+                        timestamp_message.nsec = nsecs;
 
                         timestamp_message = timestamp_message - vec_correction[number_theodolite_called-1];
 
-                        vec_data[4] = timestamp_message.sec;
-                        vec_data[5] = timestamp_message.nsec;
+                        corrected_secs = timestamp_message.sec;
+                        corrected_nsecs = timestamp_message.nsec;
                         
                         std_msgs::Float64MultiArray msg;
                         msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                        msg.layout.dim[0].size = 6;
+                        msg.layout.dim[0].size = 7;
                         msg.layout.dim[0].stride =1;
 
-                        vector<double>::const_iterator itr, end(vec_data.end());
-                        for(itr = vec_data.begin(); itr!=end; ++itr) {
-                           msg.data.push_back(*itr);
-                        }
+                        msg.data.push_back(theodolite_number);
+                        msg.data.push_back(azimuth);
+                        msg.data.push_back(elevation);
+                        msg.data.push_back(distance);
+                        msg.data.push_back(corrected_secs);
+                        msg.data.push_back(corrected_nsecs);
+                        msg.data.push_back(status);  
+                        
 
                         if(show_data)
                         {
-                            ROS_INFO("theodolite: %f ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %f ; Time server nsec: %f \n", vec_data[0], vec_data[1], vec_data[2], vec_data[3], vec_data[4], vec_data[5]);
+                            ROS_INFO("theodolite: %d ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %d ; Time server nsec: %d ; Status: %d \n", 
+                                                                                   theodolite_number,
+                                                                                   azimuth,
+                                                                                   elevation,
+                                                                                   distance,
+                                                                                   secs,
+                                                                                   nsecs,
+                                                                                   status);
                         }
                         data_pub.publish(msg);        
                     }               
