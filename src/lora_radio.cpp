@@ -146,7 +146,7 @@ void SetupLoRa()
         } else {
             writeReg(REG_MODEM_CONFIG3,0x04);
         }
-        writeReg(REG_MODEM_CONFIG,0x78);    //was 72 for 125kHz and error code 4/5
+        writeReg(REG_MODEM_CONFIG,0x78);    //was 0x72 for 125kHz and error code 4/5, 0x78 is for 4/8 code
         writeReg(REG_MODEM_CONFIG2,(sf<<4) | 0x04);
     }
 
@@ -243,7 +243,12 @@ bool receivepacket(std::vector<byte>& data_out, bool& crc_ok, bool show_data) {
                 printf("SNR: %li, ", SNR);
                 printf("Length: %i", (int)receivedbytes);
                 printf("\n");
-                printf("Payload: %.*s\n", (int)receivedbytes, message);
+                printf("Payload first two chars: %.*s\n", (((int)receivedbytes)>=2) ? 2 : ((int)receivedbytes), message);
+                printf("Payload: ");
+        		for(int i = 0; i < (int)receivedbytes; i++){
+                    printf("%X|", message[i]);                    
+                }
+                printf("\n");	
 	    
             }
             
