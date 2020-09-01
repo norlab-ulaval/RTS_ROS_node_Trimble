@@ -189,7 +189,7 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                                                                                    secs,
                                                                                    nsecs) );
 
-			           std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " << nsecs << std::endl;
+			           //std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " << nsecs << std::endl;
                         
                         ros::Time timestamp_message;
                         timestamp_message.sec = secs;

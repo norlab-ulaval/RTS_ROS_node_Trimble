@@ -188,8 +188,8 @@ void Lora_communication(int theodolite_number, int error_theodolite, double HA, 
             //txlora(data);
 
 	    
-			std::cout << "Sending these data: " << theodolite_number << " " << error_theodolite << " "
-                      << HA << " " << VA << " " << Dist << " " << (uint32_t)time_sec << " " << (uint32_t)time_nsec << std::endl;
+			//std::cout << "Sending these data: " << theodolite_number << " " << error_theodolite << " "
+            //          << HA << " " << VA << " " << Dist << " " << (uint32_t)time_sec << " " << (uint32_t)time_nsec << std::endl;
   
             std::vector<byte> data_binary;
             pack_theodolite_message_to_bytes(data_binary, (byte) theodolite_number, (byte) error_theodolite, VA, HA, Dist, (uint32_t) time_sec, (uint32_t) time_nsec);
