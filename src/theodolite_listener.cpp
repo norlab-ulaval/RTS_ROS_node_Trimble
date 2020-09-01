@@ -97,6 +97,7 @@ void Read_data(std::string &message_string, bool &corrupted_message, bool &recei
 }
 */
 
+/*
 void Read_data_Synchronization(std::string &message_string, bool &corrupted_message, bool &received_data, ros::Time &time, int param)
 {
     std::string single_word_string;
@@ -131,11 +132,12 @@ void Read_data_Synchronization(std::string &message_string, bool &corrupted_mess
         }
     }
 }
+*/
 
 void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 {
     std::vector<byte> message;
-    std::string message_string;
+    //std::string message_string;
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
     bool corrupted_message = false;
@@ -187,8 +189,7 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                                                                                    secs,
                                                                                    nsecs) );
 
-			std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " 
-                                  << nsecs << std::endl;
+			           std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " << nsecs << std::endl;
                         
                         ros::Time timestamp_message;
                         timestamp_message.sec = secs;
@@ -216,13 +217,13 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                         if(show_data)
                         {
                             ROS_INFO("theodolite: %d ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %d ; Time server nsec: %d ; Status: %d \n", 
-                                                                                   theodolite_number,
-                                                                                   azimuth,
-                                                                                   elevation,
-                                                                                   distance,
-                                                                                   secs,
-                                                                                   nsecs,
-                                                                                   status);
+                               theodolite_number,
+                               azimuth,
+                               elevation,
+                               distance,
+                               secs,
+                               nsecs,
+                               status);
                         }
                         data_pub.publish(msg);        
                     }               
@@ -251,7 +252,7 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 void Received_data_Synchronization(list<ros::Time> &list_data)
 {
     std::vector<byte> message;
-    std::string message_string;
+    //std::string message_string;
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
     bool corrupted_message = false;
@@ -264,9 +265,9 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
             if(data_CRC_ok){
                 // Copy the bytes into a string
 			    receivedbytes = message.size();
-                for(int i=0; i < receivedbytes; i++){
-                    message_string.push_back(message[i]);
-                } 
+                //for(int i=0; i < receivedbytes; i++){
+                //    message_string.push_back(message[i]);
+                //} 
 
                 if(receivedbytes >= 2)
                 {
@@ -278,7 +279,20 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                     {
                         received_data = true;
                         ros::Time new_time;
-                        Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,0);
+                        uint32_t secs, nsecs;
+                        byte command_code;
+                        
+                        corrupted_message = !( unpack_theodolite_time_from_bytes(message,
+                                                                                 command_code,
+                                                                                 secs,
+                                                                                 nsecs));
+                        if(!corrupted_message){
+                            new_time.sec = secs;
+                            new_time.nsec = nsecs;
+                            list_data.push_back(new_time);                                                    
+                        }                        
+
+                        /*Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,0);
                         if(!corrupted_message && received_data)
                         {
                             Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,1);
@@ -290,11 +304,12 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                                     list_data.push_back(new_time);
                                 }
                             }
-                        } 
+                        }
+                        */ 
                     }
                     if(corrupted_message)
                     {
-                        ROS_WARN("Received corrupted message (bad CRC) !");
+                        ROS_WARN("Received corrupted message (we couldn't parse it) !");
                         corrupted_message=true;  
                         received_data = false; 
                         break;    
