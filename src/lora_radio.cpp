@@ -21,7 +21,7 @@ int RST   = 0;
 sf_t sf = SF7;
 
 // Set center frequency
-uint32_t  freq = 915000000; // in Mhz! (868.1)
+uint32_t  freq = 905000000; // in Mhz! (868.1)
 
 void print_byte(byte input, const char* text){
 	printf("The byte %s contains: %X, which is:\n7 6 5 4 3 2 1 0 \n", text, input);
