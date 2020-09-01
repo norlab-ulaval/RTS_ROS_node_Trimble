@@ -44,8 +44,8 @@ ros::Time time_saved;
 void Received_data_check()
 {
     std::vector<byte> message;
-    std::string message_string;
     std::string data;
+    std::vector<byte> bin_data;
 
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
@@ -62,12 +62,8 @@ void Received_data_check()
             if(data_CRC_ok){
                 corrupted_message = false;
 				
-                // Copy the bytes into a string
-			    receivedbytes = message.size();
-                for(int i=0; i < receivedbytes; i++){
-                    message_string.push_back(message[i]);
-                }
-
+                receivedbytes = message.size();
+                
                 if(receivedbytes >= 2)
                 {
                     if(message[0]=='t' && message[1]==('0' + theodolite_number))
@@ -96,7 +92,7 @@ void Received_data_check()
 						synchronization_mode = true;
 
                         Config_tx_mode();		    
-                        data = "e"+std::to_string(theodolite_number)+";";
+                        data = "e"+std::to_string(theodolite_number);
                         txlora(data);
 						Config_rx_mode();
                       
@@ -109,8 +105,10 @@ void Received_data_check()
 						synchronization_mode = true;
 
                         Config_tx_mode();
-                        data = "s;" + std::to_string(time_saved.sec) + ";" + std::to_string(time_saved.nsec) + ";";
-                        txlora(data);
+                        //data = "s;" + std::to_string(time_saved.sec) + ";" + std::to_string(time_saved.nsec) + ";";
+                        pack_theodolite_time_to_bytes(bin_data, 's', time_saved.sec, time_saved.nsec);
+                        
+                        txlora(bin_data);
 						Config_rx_mode();
 
 						continue;
