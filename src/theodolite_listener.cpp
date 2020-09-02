@@ -353,6 +353,8 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged, ros:
     //Loop to have Delta t
     for(int j=0; j<number_of_ping; j++)
     {
+        if(!(ros::ok())) return;
+
         //Save time begin
         begin_time = ros::Time::now();
         //Send message to theodolite
@@ -539,6 +541,7 @@ int main(int argc, char **argv)
                 }   
             }
         }
+        if(!(ros::ok())) break;
 
         // Tx configuration to call theodolite targeted
         Config_tx_mode();
