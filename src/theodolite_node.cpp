@@ -366,6 +366,7 @@ int main(int argc, char **argv)
 	} //test lora if
 	else				// only testing lora
 	{
+        if(use_lora) Config_rx_mode();	
 		while(ros::ok())
 		{
     	    Lora_communication(1, 0, 2.14578, 5.58749, 6.14785, 1598131342.0, 388808162.0);
