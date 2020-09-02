@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   roslaunch
   message_generation
+  theodolite_node_msgs
 )
 
 ## Generate added messages and services
@@ -20,7 +21,7 @@ generate_messages(DEPENDENCIES std_msgs)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES theodolite_node_ROS
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime theodolite_node_msgs
 #  DEPENDS system_lib
 )
 
@@ -150,6 +151,7 @@ file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*" "src/
 #add_executable(theodolite_node ${SOURCES})
 
 add_executable(theodolite_listener src/theodolite_listener.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
+add_dependencies(theodolite_listener ${catkin_EXPORTED_TARGETS})
 target_link_libraries(theodolite_listener 
         ${catkin_LIBRARIES} 
         ${WIRINGPI_LIBRARIES}
