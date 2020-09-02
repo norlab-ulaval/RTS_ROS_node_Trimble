@@ -18,7 +18,6 @@ using namespace std;
 //
 
 //Vector which will publish the data
-//std::vector<double> vec_data{0,0,0,0,0,0};
 std::vector<ros::Duration> vec_correction{ros::Duration(0), ros::Duration(0), ros::Duration(0)};
 
 //Option selected in launchfile
@@ -67,77 +66,10 @@ void Update_number_theodolite_called(int &number_theodolite, int max_theodolite_
     }
 }
 
-/*
-void Read_data(std::string &message_string, bool &corrupted_message, bool &received_data, std::vector<double> &vec_data, int &iterator_vector)
-{
-    std::string single_word_string;
-
-    // looking for the theodolite data and split message
-    size_t delimiter_position = message_string.find(';');
-    if(delimiter_position == std::string::npos){
-        received_data = true;
-        corrupted_message=true;
-    }
-
-    if(!corrupted_message)
-    {
-        single_word_string = message_string.substr(0, delimiter_position);
-        message_string = message_string.substr(delimiter_position+1, std::string::npos);
-
-        try{
-            vec_data[iterator_vector] = stod(single_word_string); 
-            iterator_vector++;  
-        }
-        catch (const std::invalid_argument & ia){
-            ROS_WARN((std::string("Invalid theodolite message received!")+ia.what()).c_str());
-            received_data = true;
-            corrupted_message=true;                    
-        }
-    }
-}
-*/
-
-/*
-void Read_data_Synchronization(std::string &message_string, bool &corrupted_message, bool &received_data, ros::Time &time, int param)
-{
-    std::string single_word_string;
-
-    // looking for the theodolite id number
-    size_t delimiter_position = message_string.find(';');
-    if(delimiter_position == std::string::npos){
-        received_data = false;
-        corrupted_message=true;
-    }
-
-    if(!corrupted_message)
-    {
-        //std::cout << "String : " <<  message_string << "\n";
-        single_word_string = message_string.substr(0, delimiter_position);
-        message_string = message_string.substr(delimiter_position+1, std::string::npos);
-        //std::cout << "String conversion : " <<  single_word_string << "\n";
-        try{
-            if(param == 1)
-            {   
-                time.sec = stoul(single_word_string);
-            }
-            if(param == 2)
-            {   
-                time.nsec = stoul(single_word_string);
-            }
-        }
-        catch (const std::invalid_argument & ia){
-            ROS_WARN((std::string("Invalid theodolite id received!")+ia.what()).c_str());
-            received_data = false;
-            corrupted_message=true;                    
-        }
-    }
-}
-*/
 
 void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 {
     std::vector<byte> message;
-    //std::string message_string;
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
     bool corrupted_message = false;
@@ -161,24 +93,13 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
         if(receivepacket(message, data_CRC_ok, show_data)){
             if(data_CRC_ok){
                 
-                // Copy the bytes into a string
 			    receivedbytes = message.size();
-                //for(int i=0; i < receivedbytes; i++){
-                //    message_string.push_back(message[i]);
-                //} 
 
                 if(receivedbytes >= 2)
                 {
                     if(message[0]!='p')
                     {
                         // looking for the theodolite data
-                        
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
-                        //Read_data(message_string, corrupted_message, received_data, vec_data, iterator_vector);
 
                         corrupted_message = !( unpack_theodolite_message_from_bytes(message,
                                                                                    theodolite_number,
@@ -252,7 +173,6 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 void Received_data_Synchronization(list<ros::Time> &list_data)
 {
     std::vector<byte> message;
-    //std::string message_string;
     unsigned int receivedbytes;
     bool data_CRC_ok = false;
     bool corrupted_message = false;
@@ -263,11 +183,7 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
     {
         if(receivepacket(message, data_CRC_ok, show_data)){
             if(data_CRC_ok){
-                // Copy the bytes into a string
 			    receivedbytes = message.size();
-                //for(int i=0; i < receivedbytes; i++){
-                //    message_string.push_back(message[i]);
-                //} 
 
                 if(receivedbytes >= 2)
                 {
@@ -292,20 +208,6 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
                             list_data.push_back(new_time);                                                    
                         }                        
 
-                        /*Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,0);
-                        if(!corrupted_message && received_data)
-                        {
-                            Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,1);
-                            if(!corrupted_message && received_data)
-                            {
-                                Read_data_Synchronization(message_string, corrupted_message, received_data, new_time,2);
-                                if(!corrupted_message && received_data)
-                                {
-                                    list_data.push_back(new_time);
-                                }
-                            }
-                        }
-                        */ 
                     }
                     if(corrupted_message)
                     {
