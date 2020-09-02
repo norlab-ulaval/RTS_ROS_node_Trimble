@@ -280,7 +280,10 @@ static void configPower (int8_t pw) {
         }
         // check board type for BOOST pin
         writeReg(RegPaConfig, (uint8_t)(0x80|(pw&0xf)));
-        writeReg(RegPaDac, readReg(RegPaDac)|0x4);
+        writeReg(RegPaDac, readReg(RegPaDac)|0x07);
+        
+        // increase the current limit to 200 mA
+        writeReg(RegOcp, 0x3B);
 
     } else {
         // set PA config (2-17 dBm using PA_BOOST)
@@ -379,7 +382,7 @@ void General_setup_lora()
     opmode(OPMODE_STANDBY);
 	
     writeReg(RegPaRamp, (readReg(RegPaRamp) & 0xF0) | 0x08); // set PA ramp-up time 50 uSec
-    configPower(23);
+    configPower(20);
 }
 
 void Config_rx_mode()
