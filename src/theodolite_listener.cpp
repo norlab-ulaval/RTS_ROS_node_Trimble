@@ -161,7 +161,7 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
             if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(RECEIVE_TIMEOUT_MS))
             {
                received_data = false;
-               ROS_WARN("200 milisec timeout");
+               ROS_WARN("Receive timeout when waiting for theodolite response.");
                break;
             }
         }
@@ -228,10 +228,10 @@ void Received_data_Synchronization(list<ros::Time> &list_data)
         }
         else{
             delay(1);
-            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(200))
+            if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(RECEIVE_TIMEOUT_MS))
             {
                received_data = false;
-               ROS_WARN("200 milisec timeout");
+               ROS_WARN("Receive timeout when waiting for theodolite response.");
                break;
             }
         }
