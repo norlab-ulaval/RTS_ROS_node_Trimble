@@ -146,7 +146,7 @@ void SetupLoRa()
         } else {
             writeReg(REG_MODEM_CONFIG3,0x04);
         }
-        writeReg(REG_MODEM_CONFIG,0x88);    //was 0x72 for 125kHz and error code 4/5, 0x88 is for 250kHz and 4/8 code
+        writeReg(REG_MODEM_CONFIG,0x84);    //was 0x72 for 125kHz and error code 4/5, 0x88 is for 250kHz and 4/8 code
         writeReg(REG_MODEM_CONFIG2,(sf<<4) | 0x04);
     }
 
