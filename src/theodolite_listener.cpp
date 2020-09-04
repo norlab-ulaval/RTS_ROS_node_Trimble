@@ -1,6 +1,7 @@
 #include "ros/ros.h"
-#include "std_msgs/String.h"
-#include "std_msgs/Float64MultiArray.h"
+
+#include "theodolite_node_msgs/TheodoliteCoordsStamped.h"
+#include "theodolite_node_msgs/TheodoliteTimeCorrection.h"
 
 #include "lora_radio.h"
 #include "radio_message_serialize.h"
@@ -100,7 +101,6 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                     if(message[0]!='p')
                     {
                         // looking for the theodolite data
-
                         corrupted_message = !( unpack_theodolite_message_from_bytes(message,
                                                                                    theodolite_number,
                                                                                    status,
@@ -110,7 +110,7 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                                                                                    secs,
                                                                                    nsecs) );
 
-			           //std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " << nsecs << std::endl;
+			            //std::cout << "Received these data: " << (int)theodolite_number << " " << (int)status << " " << azimuth << " " << elevation << " " << distance << " " << secs << " " << nsecs << std::endl;
                         
                         ros::Time timestamp_message;
                         timestamp_message.sec = secs;
@@ -120,20 +120,19 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 
                         corrected_secs = timestamp_message.sec;
                         corrected_nsecs = timestamp_message.nsec;
-                        
-                        std_msgs::Float64MultiArray msg;
-                        msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-                        msg.layout.dim[0].size = 7;
-                        msg.layout.dim[0].stride =1;
 
-                        msg.data.push_back(theodolite_number);
-                        msg.data.push_back(azimuth);
-                        msg.data.push_back(elevation);
-                        msg.data.push_back(distance);
-                        msg.data.push_back(corrected_secs);
-                        msg.data.push_back(corrected_nsecs);
-                        msg.data.push_back(status);  
-                        
+
+                        theodolite_node_msgs::TheodoliteCoordsStamped msg;
+                        msg.header.stamp = timestamp_message;
+                        msg.header.frame_id = ("theodolite_n_" + std::to_string((int)theodolite_number));
+                        msg.theodolite_time.sec = secs;
+                        msg.theodolite_time.nsec = nsecs;
+                        msg.theodolite_id = theodolite_number;
+                        msg.status = status;
+                        msg.azimuth = azimuth;
+                        msg.elevation = elevation;
+                        msg.distance = distance;                  
+    
 
                         if(show_data)
                         {
@@ -146,13 +145,13 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
                                nsecs,
                                status);
                         }
-                        data_pub.publish(msg);        
-                    }               
+                        data_pub.publish(msg);
+                    }
                 }
             }
             else{
-                    ROS_WARN("Received corrupted message (bad CRC)");
-                    corrupted_message=true;       
+                ROS_WARN("Received corrupted message (bad CRC)");
+                corrupted_message=true;       
             }
             break;
         }
@@ -331,16 +330,11 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged, ros:
             vec_correction[number_theodolite_pinged-1] = ros::Duration(avg);
         }
 
-        std_msgs::Float64MultiArray msg;
-        msg.layout.dim.push_back(std_msgs::MultiArrayDimension());
-        msg.layout.dim[0].size = 4;
-        msg.layout.dim[0].stride =1;
-
-        ros::Time timestamp = ros::Time::now();
-        msg.data.push_back(timestamp.sec);
-        msg.data.push_back(timestamp.nsec);
-        msg.data.push_back((double) number_theodolite_pinged);
-        msg.data.push_back(vec_correction[number_theodolite_pinged-1].toSec());
+        theodolite_node_msgs::TheodoliteTimeCorrection msg;
+        msg.header.stamp = ros::Time::now();
+        msg.header.frame_id = ("theodolite_n_" + std::to_string(number_theodolite_pinged));
+        msg.theodolite_id = number_theodolite_pinged;
+        msg.estimated_time_offset = vec_correction[number_theodolite_pinged-1];       
 
         correction_pub.publish(msg);        
         
@@ -363,8 +357,8 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "theodolite_listener");
     ros::NodeHandle n;
     //Publisher of the data in a vector
-    ros::Publisher data_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_data", 10);
-    ros::Publisher correction_pub = n.advertise<std_msgs::Float64MultiArray>("theodolite_correction_timestamp", 10);
+    ros::Publisher data_pub = n.advertise<theodolite_node_msgs::TheodoliteCoordsStamped>("theodolite_data", 10);
+    ros::Publisher correction_pub = n.advertise<theodolite_node_msgs::TheodoliteTimeCorrection>("theodolite_correction_timestamp", 10);
     n.getParam("/theodolite_listener/rate", rate);
     //Set the rate of the listener
     if(rate >100 or rate<1)
