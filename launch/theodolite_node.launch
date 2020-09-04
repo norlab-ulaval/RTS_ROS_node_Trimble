@@ -13,7 +13,7 @@
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
         <param name="show_data" value= "true" />
         <!-- Parameter to test Lora communication with fake data. Doesn't need a theodolite -->
-        <param name="test_lora" value= "false" />
+        <param name="test_lora" value= "true" />
         <!-- Parameter to set the rate of the fake data -->
         <param name="test_rate" value= "10" />
 
