@@ -218,26 +218,26 @@ void terminate_it(const char* error){
 int main(int argc, char **argv)
 {
 	// Set up ROS.
-    ros::init(argc, argv, "theodolite_node");
+    ros::init(argc, argv, "theodolite_node_test");
     ros::NodeHandle n;
-
+    ros::NodeHandle pn("~");
 
     //Get parameters
     //Theodolite number (to differentiate data if many theodolites target one prism)
-    n.getParam("/theodolite_node/theodolite_number", theodolite_number);
+    pn.getParam("theodolite_number", theodolite_number);
     //Number of target prism
     int target_prism = 0;
-    n.getParam("/theodolite_node/target_prism", target_prism); 
+    pn.getParam("target_prism", target_prism); 
     //Number of measurements decided   
     int number_of_measurements_choice = 10;
-    n.getParam("/theodolite_node/number_of_measurments", number_of_measurements_choice);    
+    pn.getParam("number_of_measurments", number_of_measurements_choice);    
     bool use_lora = false;
-    n.getParam("/theodolite_node/use_lora", use_lora);
-    n.getParam("/theodolite_node/show_data", show_data);
+    pn.getParam("use_lora", use_lora);
+    pn.getParam("show_data", show_data);
     bool test_lora = false;
-    n.getParam("/theodolite_node/test_lora", test_lora);
+    pn.getParam("test_lora", test_lora);
     int test_rate = 10;
-    n.getParam("/theodolite_node/test_rate", test_rate);
+    pn.getParam("test_rate", test_rate);
     ros::Rate loop_rate(test_rate);
 
     printf("\n");
@@ -272,7 +272,13 @@ int main(int argc, char **argv)
 		SsiInstrument& instrument = SsiInstrument::GetInstrument();
 		instrument.LoadDriver();
 
+        std::string ssi_version = "SSI Version: " + getSsiVersion();
+        std::string ssi_driver_info = "Driver info: " + instrument.PrintDriverInformation(); 
+
         ROS_INFO("Loaded driver");
+        ROS_INFO(ssi_version.c_str());
+        ROS_INFO(ssi_driver_info.c_str());
+
         ROS_INFO("Connecting...");
 
 		//Connect to the theodolite
@@ -290,9 +296,19 @@ int main(int argc, char **argv)
         ROS_INFO("Intrument connected");
 
 		//Select Multitrack mode with the proper prism number
-		instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism);
-		std::shared_ptr<ObservationListener> observation_listener = std::make_shared<ObservationListener>();
+		//instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism);
+        instrument.Target(SsiInstrument::MODE_DR_LASER, target_prism);
+        std::shared_ptr<ObservationListener> observation_listener = std::make_shared<ObservationListener>();
 
+        std::getchar();
+
+        std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+        instrument.DoMeasure(false);
+        std::cout << "Took: " << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start).count() << "s." << std::endl;
+
+        std::getchar();
+
+       
 		//Begin tracking of prism
 		if(instrument.Tracking(true, observation_listener.get()) == 0)
 		{
@@ -320,7 +336,7 @@ int main(int argc, char **argv)
 					}
 					else
 					{
-						usleep(50);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
+						sleep(1);  //Time to wait a new measurement (frequency of measurements is around 2.5Hz)
 					}    
                             
 				}

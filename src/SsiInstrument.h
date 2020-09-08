@@ -2,6 +2,8 @@
 #define SALLY_INSTRUMENT_H
 
 #include "IDriverManager.h"
+#include "DriverManagerInstance.h"
+#include "IDriverInformation.h"
 #include "VideoStreamingListener.h"
 #include "Observations/ITrackingObservationsListener.h"
 
@@ -26,6 +28,7 @@ public:
         MODE_AUTOLOCK,
         MODE_DR,
         MODE_DR_LASER,
+        MODE_DR_WEAK,
         MODE_MULTITRACK
     };
 
@@ -42,6 +45,7 @@ public:
     int Elevel(bool bStart);
     int TrackLigth();
     int setServosAnglesSynchronous(double HA, double VA);
+    std::string PrintDriverInformation();
 
 private:
     SSI::IDriverManager& _DriverManager;

@@ -147,7 +147,7 @@ include_directories(${catkin_INCLUDE_DIRS}
         ${WIRINGPI_INCLUDE_DIRS}
         )
 
-file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*" "src/theodolite_node.cpp" "lora_radio.cpp" "radio_message_serialize.cpp")
+file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*")
 #add_executable(theodolite_node ${SOURCES})
 
 add_executable(theodolite_listener src/theodolite_listener.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)

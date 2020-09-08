@@ -11,6 +11,8 @@
 #include "Observations/IDistanceObservation.h"
 #include "Observations/ITimeObservation.h"
 
+#include <iostream>
+
 extern int ssi_output(const char* fmt, ...);
 
 SsiCallbacks::SsiCallbacks()
@@ -135,10 +137,14 @@ void SsiCallbacks::OnMeasure(SSI::TSObservationContainer& container)
 		}
     }
 
-    if(angle)
+    if(angle){
         ssi_output("Measure: Ha %.6f Va %.6f Sd %.4f Tm %.3f\n", 
         angle->getAngles().getHorizontalAngle(), angle->getAngles().getVerticalAngle(),
         distance ? distance->getSlopeDistance():0, time ? time->getTimeUtc():0);
+        
+        std::cout << "Measure: Ha " << angle->getAngles().getHorizontalAngle() << " Va " << angle->getAngles().getVerticalAngle() <<
+                  " Sd " << (distance ? distance->getSlopeDistance():0) << " Tm " << (time ? time->getTimeUtc():0) << std::endl;
+    } 
 }
 
 void SsiCallbacks::OnIdleAngles(const SSI::SphericalAngles& angles)
