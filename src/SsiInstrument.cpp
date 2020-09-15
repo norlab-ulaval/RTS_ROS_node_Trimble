@@ -399,6 +399,14 @@ int SsiInstrument::DoMeasure(bool bAngleonly)
 	return 0;
 }
 
+int SsiInstrument::getLastMeasurementValues(double& HA, double& VA, double& dist, double& time){
+    if(_pCallback){
+        _pCallback->getLastMeasuremntValues(HA, VA, dist, time);
+        return 0;    
+    }
+    return -1;
+}
+
 int SsiInstrument::Tracking(bool bStart, int param)
 {
 	return Tracking(bStart, _pCallback ,param);

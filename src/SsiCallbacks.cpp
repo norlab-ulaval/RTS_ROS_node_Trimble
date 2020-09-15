@@ -12,6 +12,7 @@
 #include "Observations/ITimeObservation.h"
 
 #include <iostream>
+#include <cmath>
 
 extern int ssi_output(const char* fmt, ...);
 
@@ -142,9 +143,28 @@ void SsiCallbacks::OnMeasure(SSI::TSObservationContainer& container)
         angle->getAngles().getHorizontalAngle(), angle->getAngles().getVerticalAngle(),
         distance ? distance->getSlopeDistance():0, time ? time->getTimeUtc():0);
         
-        std::cout << "Measure: Ha " << angle->getAngles().getHorizontalAngle() << " Va " << angle->getAngles().getVerticalAngle() <<
+        // the ssi_output goes who knows where, lets print it with cout
+        std::cout << "Single Measurement: Ha " << angle->getAngles().getHorizontalAngle() << " Va " << angle->getAngles().getVerticalAngle() <<
                   " Sd " << (distance ? distance->getSlopeDistance():0) << " Tm " << (time ? time->getTimeUtc():0) << std::endl;
+
+        last_measurement_HA = angle->getAngles().getHorizontalAngle();
+        last_measurement_VA = angle->getAngles().getVerticalAngle();
+        last_measurement_dist = distance ? (distance->getSlopeDistance())   :    (std::nan(""));
+        last_measurement_time = time     ? (time->getTimeUtc())             :    (std::nan(""));
+    }
+    else{
+        last_measurement_HA = std::nan("");
+        last_measurement_VA = std::nan("");
+        last_measurement_dist = std::nan("");
+        last_measurement_time = std::nan("");
     } 
+}
+
+void SsiCallbacks::getLastMeasuremntValues(double& HA, double& VA, double& dist, double& time){
+    HA = last_measurement_HA;
+    VA = last_measurement_VA;
+    dist = last_measurement_dist;
+    time = last_measurement_time; 
 }
 
 void SsiCallbacks::OnIdleAngles(const SSI::SphericalAngles& angles)

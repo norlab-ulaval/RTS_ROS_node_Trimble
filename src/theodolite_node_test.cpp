@@ -301,16 +301,20 @@ int main(int argc, char **argv)
         std::shared_ptr<ObservationListener> observation_listener = std::make_shared<ObservationListener>();
 
         std::getchar();
+        double HA, VA, dist, time;
 
         std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
         instrument.DoMeasure(false);
         std::cout << "Took: " << std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - start).count() << "s." << std::endl;
+        instrument.getLastMeasurementValues(HA, VA, dist, time);
+        std::cout << HA << " " << VA << " " << dist << " " << time << std::endl;
 
         std::getchar();
-
+        ros::shutdown();
        
 		//Begin tracking of prism
-		if(instrument.Tracking(true, observation_listener.get()) == 0)
+		//if(instrument.Tracking(true, observation_listener.get()) == 0)
+        if(true)
 		{
 			//Variable to detect new measurments
 			int number_of_measurements_new = 0;   //New number of measurments
@@ -325,6 +329,8 @@ int main(int argc, char **argv)
 			{
 				try
 				{   
+                    instrument.DoMeasure(false);
+
 					if(!synchronization_mode)
 					{                    
 						Check_new_observation(observation_listener, number_of_measurements_new, number_of_measurements_old);

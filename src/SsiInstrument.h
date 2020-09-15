@@ -35,6 +35,7 @@ public:
     //Ts
     int ChangeFace();
     int DoMeasure(bool bAngleonly);
+    int getLastMeasurementValues(double& HA, double& VA, double& dist, double& time);
     int Tracking(bool bStart, int param = 0);
     int Tracking(bool bStart, SSI::ITrackingObservationsListener* listener, int param = 0);
     int IdleAngles(int option);
