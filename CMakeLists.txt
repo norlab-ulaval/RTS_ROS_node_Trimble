@@ -150,9 +150,16 @@ include_directories(${catkin_INCLUDE_DIRS}
 file(GLOB SOURCES "src/Obs*" "src/Ssi*" "src/TCP*" "src/USB*" "src/Video*")
 #add_executable(theodolite_node ${SOURCES})
 
-add_executable(theodolite_listener src/theodolite_listener.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
-add_dependencies(theodolite_listener ${catkin_EXPORTED_TARGETS})
-target_link_libraries(theodolite_listener 
+add_executable(theodolite_master src/theodolite_master.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
+add_dependencies(theodolite_master ${catkin_EXPORTED_TARGETS})
+target_link_libraries(theodolite_master 
+        ${catkin_LIBRARIES} 
+        ${WIRINGPI_LIBRARIES}
+        )
+
+add_executable(theodolite_interactive_master src/theodolite_interactive_master.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
+add_dependencies(theodolite_interactive_master ${catkin_EXPORTED_TARGETS})
+target_link_libraries(theodolite_interactive_master 
         ${catkin_LIBRARIES} 
         ${WIRINGPI_LIBRARIES}
         )
@@ -165,13 +172,6 @@ target_link_libraries(theodolite_node
         ${WIRINGPI_LIBRARIES}
         )
 
-add_executable(theodolite_node_test ${SOURCES} src/theodolite_node_test.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
-target_link_libraries(theodolite_node_test 
-        ${catkin_LIBRARIES} 
-        ${PROJECT_LIBRARY_LINK}
-        ${LIBUSB_1_LIBRARY}
-        ${WIRINGPI_LIBRARIES}
-        )
 
 
 

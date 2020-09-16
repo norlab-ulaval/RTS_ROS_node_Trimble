@@ -23,6 +23,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <math.h>
 #define ASIO_STANDALONE
 #include <asio/thread_pool.hpp>
 #include <asio/post.hpp>
@@ -39,6 +40,8 @@ bool received_data_for_me = false;
 bool received_t_command = false;
 bool show_data = false;
 bool synchronization_mode = false;
+bool direct_meas_mode_requested = false;
+bool direct_meas_mode_active = false;
 ros::Time time_saved;
 
 void Received_data_check()
@@ -120,6 +123,43 @@ void Received_data_check()
 						received_t_command = false;
 						continue;
                     }
+                    if(message[0]=='d' && message[1]==('0' + theodolite_number))
+                    {
+                        received_data_for_me = true;
+                        synchronization_mode = false;
+						received_t_command = false;
+                        if(!direct_meas_mode_active){
+                            direct_meas_mode_requested = true;
+                        }
+                        else{
+                            sleep(0.01);
+                            Config_tx_mode();
+                            data = "dOk";
+                            txlora(data);
+						    Config_rx_mode();
+                            direct_meas_mode_requested = true;
+                        }						
+                        continue;
+                    }
+                    if(message[0]=='n' && message[1]==('0' + theodolite_number))
+                    {
+                        received_data_for_me = true;
+                        synchronization_mode = false;
+						received_t_command = false;
+                        if(!direct_meas_mode_active){
+                            sleep(0.01);
+                            Config_tx_mode();
+                            data = "nOk";
+                            txlora(data);
+						    Config_rx_mode();
+                            direct_meas_mode_requested = false;
+                        }
+                        else{
+                            direct_meas_mode_requested = false;
+                        }
+						continue;
+                    }
+                    
             	}
             }
             else{
@@ -173,31 +213,20 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
 	}
 }
 
-void Lora_communication(int theodolite_number, int error_theodolite, double HA, double VA, double Dist, double time_sec, double time_nsec)
-{
-    Received_data_check();
+void Lora_send_measurement(int theodolite_number, int error_theodolite, double HA, double VA, double Dist, double time_sec, double time_nsec)
+{    
+	Config_tx_mode();            
 	
-    if(received_data_for_me)
-    {
-        if(!synchronization_mode && received_t_command)
-        {
-			Config_tx_mode();            
-			//Send data to robot
-            
-            //std::string data = std::to_string(theodolite_number) + ";" + std::to_string(HA) + ";" + std::to_string(VA) + ";" + std::to_string(Dist) + ";" + std::to_string(time_sec) + ";" + std::to_string(time_nsec) + ";";
-            //txlora(data);
+    //Send data to robot
+    
+	//std::cout << "Sending these data: " << theodolite_number << " " << error_theodolite << " "
+    //          << HA << " " << VA << " " << Dist << " " << (uint32_t)time_sec << " " << (uint32_t)time_nsec << std::endl;
 
-	    
-			//std::cout << "Sending these data: " << theodolite_number << " " << error_theodolite << " "
-            //          << HA << " " << VA << " " << Dist << " " << (uint32_t)time_sec << " " << (uint32_t)time_nsec << std::endl;
-  
-            std::vector<byte> data_binary;
-            pack_theodolite_message_to_bytes(data_binary, (byte) theodolite_number, (byte) error_theodolite, VA, HA, Dist, (uint32_t) time_sec, (uint32_t) time_nsec);
-            txlora(data_binary);
+    std::vector<byte> data_binary;
+    pack_theodolite_message_to_bytes(data_binary, (byte) theodolite_number, (byte) error_theodolite, VA, HA, Dist, (uint32_t) time_sec, (uint32_t) time_nsec);
+    txlora(data_binary);
 
-     		Config_rx_mode();
-		}
-    }
+	Config_rx_mode();
 }
 
 //Function for theodolite
@@ -309,14 +338,66 @@ int main(int argc, char **argv)
 			{
 				try
 				{   
-					if(!synchronization_mode)
+					if(!synchronization_mode && !direct_meas_mode_active)
 					{                    
 						Check_new_observation(observation_listener, number_of_measurements_new, number_of_measurements_old);
 					}
 
         			if(use_lora)
 					{
-						Lora_communication(theodolite_number, error_theodolite, HA, VA, Dist, Time_sec, Time_nsec);
+                        Received_data_check();
+
+                        if(received_data_for_me)
+                        {
+                        
+                            if(direct_meas_mode_requested && !direct_meas_mode_active){                                        // turn the direct measurement on
+                                bool something_went_wrong = false;                                                             // we can spot a problem
+                                if(instrument.Tracking(false, observation_listener.get())) something_went_wrong = true;        // stop the tracking mode
+                                if(!something_went_wrong){
+                                    if(instrument.Target(SsiInstrument::MODE_DR_LASER, target_prism)) something_went_wrong = true;   // switch to the direct measurement mode with laser
+                                }
+                                
+                                std::string response;
+                                if(something_went_wrong) response = "dNo";
+                                else {response = "dOk"; direct_meas_mode_active = true;}
+                                
+                                Config_tx_mode();
+                                txlora(response);
+						        Config_rx_mode();    
+                                direct_meas_mode_requested = false;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                            }
+                            if(!direct_meas_mode_requested && direct_meas_mode_active){                                                 // turn the direct measurement off
+                                bool something_went_wrong = false;                                                                      // we can spot a problem
+                                if(instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism)) something_went_wrong = true;        // switch to the prism mode
+                                if(!something_went_wrong){
+                                    if(instrument.Tracking(true, observation_listener.get())) something_went_wrong = true;   // start tracking the prism again
+                                }
+                                
+                                std::string response;
+                                if(something_went_wrong) response = "nNo";
+                                else {response = "nOk"; direct_meas_mode_active = false;}
+                                
+                                Config_tx_mode();
+                                txlora(response);
+						        Config_rx_mode();    
+                                direct_meas_mode_requested = true;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                            }
+                        
+                        
+                            if(!synchronization_mode && received_t_command && !direct_meas_mode_active)
+                            {
+				                Lora_send_measurement(theodolite_number, error_theodolite, HA, VA, Dist, Time_sec, Time_nsec);
+                            }
+                            if(!synchronization_mode && received_t_command && direct_meas_mode_active)
+                            {
+                                instrument.DoMeasure(false);
+                                if(!instrument.getLastMeasurementValues(HA, VA, Dist, Time_sec)){
+				                    Lora_send_measurement(theodolite_number, error_theodolite, HA, VA, Dist, floor(Time_sec), Time_sec-floor(Time_sec));
+                                }
+                            }
+
+                            
+                        }
 					}
 					else
 					{
@@ -369,8 +450,40 @@ int main(int argc, char **argv)
         if(use_lora) Config_rx_mode();	
 		while(ros::ok())
 		{
-    	    Lora_communication(1, 0, 2.14578, 5.58749, 6.14785, 1598131342.0, 388808162.0);
-            delay(5);
+            Received_data_check();
+            if(received_data_for_me){
+
+                if(direct_meas_mode_requested && !direct_meas_mode_active){                                        // turn the direct measurement on
+                    std::string response;
+                    response = "dOk"; 
+                    direct_meas_mode_active = true;
+                    
+                    Config_tx_mode();
+                    txlora(response);
+		            Config_rx_mode();    
+                    direct_meas_mode_requested = false;
+                }
+                if(!direct_meas_mode_requested && direct_meas_mode_active){                                                 // turn the direct measurement off
+                    std::string response;
+                    response = "nOk"; 
+                    direct_meas_mode_active = false;
+                    
+                    Config_tx_mode();
+                    txlora(response);
+		            Config_rx_mode();    
+                    direct_meas_mode_requested = true;
+                }
+    	        if(!synchronization_mode && received_t_command && !direct_meas_mode_active)
+                {
+                    Lora_send_measurement(9, 0, 1.234, 5.678, 666.1, 1598131342.0, 388808162.0);
+                }
+                if(!synchronization_mode && received_t_command && direct_meas_mode_active)
+                {
+                    sleep(1.0);
+                    Lora_send_measurement(9, 0, 4.321, 8.765, 333.2, 1598131342.0, 388808162.0);
+                }
+                
+            }
 		     	
             ros::spinOnce();
 	    }
