@@ -144,9 +144,9 @@ int main(int argc, char **argv)
 
     //ROS init
     ros::init(argc, argv, "theodolite_interactive_master");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
     //Publisher of the data in a vector
-    n.getParam("/theodolite_listener/show_data", show_data);
+    n.getParam("show_data", show_data);
 
     //Configure LoRa antenna
     General_setup_lora();
