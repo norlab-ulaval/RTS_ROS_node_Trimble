@@ -100,7 +100,7 @@ void Received_data_check()
                         if(!corrupted_message){
                             ROS_INFO("Theodolite responded this time: sec: %d; nsec: %d\n", 
                                secs,
-                               nsecs,                                                 
+                               nsecs);                                             
                         }                        
                         break;
                     }
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
         std::string tmp;
         while (true) {
             std::getline(std::cin, tmp);
-            std::lock_guard lock{mutex};
+            std::lock_guard<std::mutex> lock(mutex);
             lines.push_back(std::move(tmp));
             cv.notify_one();
         }
@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     {
         {
             // critical section
-            std::unique_lock lock{mutex};
+            std::unique_lock<std::mutex> lock(mutex);
             if (cv.wait_for(lock, std::chrono::seconds(0), [&]{ return !lines.empty(); })) {
                 // get a new batch of lines to process
                 std::swap(lines, toProcess);
@@ -180,7 +180,7 @@ int main(int argc, char **argv)
             std::cout << "Sending the message..." << std::endl;
             // Tx configuration to call theodolite targeted
             Config_tx_mode();
-            txlora(toProcess.pop_front());
+            txlora(toProcess.front());
             // Rx configuration to read the message send by the theodolite called
             Config_rx_mode();
             toProcess.clear();

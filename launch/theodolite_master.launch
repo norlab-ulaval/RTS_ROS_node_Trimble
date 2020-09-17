@@ -1,5 +1,5 @@
 <launch>
-    <node name="theodolite_listener" type="theodolite_listener" pkg="theodolite_node" output="screen">
+    <node name="theodolite_master" type="theodolite_master" pkg="theodolite_node" output="screen">
 
         <!-- Parameter to set the rate of the listener. Should be between 1 and 100Hz -->
         <param name="rate" value= "5" />        
