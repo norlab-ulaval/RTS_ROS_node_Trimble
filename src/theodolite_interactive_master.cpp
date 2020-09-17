@@ -27,7 +27,7 @@ using namespace std;
 //
 
 //Option selected in launchfile
-bool show_data = false;  //Option to see data on terminal when received
+bool show_data = true;   //Option to see data on terminal when received
 int rate = 10;           //Rate of listener in Hz
 bool received_data = false;
 
@@ -61,7 +61,7 @@ void Received_data_check()
 
                 if(receivedbytes >= 2)
                 {
-                    if(message[0]!='p')
+                    if(message[0]>0 && message[0]<10 )
                     {
                         // looking for the theodolite data
                         corrupted_message = !( unpack_theodolite_message_from_bytes(message,
@@ -73,7 +73,7 @@ void Received_data_check()
                                                                                    secs,
                                                                                    nsecs) );                      
 
-                        if(show_data)
+                        if(show_data && !corrupted_message)
                         {
                             ROS_INFO("Theodolite: %d ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %d ; Time server nsec: %d ; Status: %d \n", 
                                theodolite_number,
@@ -83,6 +83,9 @@ void Received_data_check()
                                secs,
                                nsecs,
                                status);
+                        }
+                        else{
+                            ROS_INFO("Not a coordinate messsage or malformed.");                        
                         }
                         break;
                     }
@@ -147,6 +150,7 @@ int main(int argc, char **argv)
 
     //Configure LoRa antenna
     General_setup_lora();
+    Config_rx_mode();
 
     printf("------------------\n");
     ROS_INFO("Spinning up a thread for io.");
