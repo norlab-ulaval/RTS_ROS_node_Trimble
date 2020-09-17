@@ -164,6 +164,13 @@ target_link_libraries(theodolite_interactive_master
         ${WIRINGPI_LIBRARIES}
         )
 
+add_executable(theodolite_collect_markers src/theodolite_collect_markers.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
+add_dependencies(theodolite_collect_markers ${catkin_EXPORTED_TARGETS})
+target_link_libraries(theodolite_collect_markers 
+        ${catkin_LIBRARIES} 
+        ${WIRINGPI_LIBRARIES}
+        )
+
 add_executable(theodolite_node ${SOURCES} src/theodolite_node.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
 target_link_libraries(theodolite_node 
         ${catkin_LIBRARIES} 
