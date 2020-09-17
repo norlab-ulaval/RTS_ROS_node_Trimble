@@ -358,13 +358,16 @@ int main(int argc, char **argv)
                                 }
                                 
                                 std::string response;
-                                if(something_went_wrong) response = "dNo";
+                                if(something_went_wrong) {
+                                    response = "dNo";
+                                    direct_meas_mode_requested = false;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                                }
                                 else {response = "dOk"; direct_meas_mode_active = true;}
                                 
                                 Config_tx_mode();
                                 txlora(response);
 						        Config_rx_mode();    
-                                direct_meas_mode_requested = false;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                                
                             }
                             if(!direct_meas_mode_requested && direct_meas_mode_active){                                                 // turn the direct measurement off
                                 bool something_went_wrong = false;                                                                      // we can spot a problem
@@ -374,13 +377,15 @@ int main(int argc, char **argv)
                                 }
                                 
                                 std::string response;
-                                if(something_went_wrong) response = "nNo";
+                                if(something_went_wrong){
+                                    response = "nNo";
+                                    direct_meas_mode_requested = true;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                                }
                                 else {response = "nOk"; direct_meas_mode_active = false;}
                                 
                                 Config_tx_mode();
                                 txlora(response);
 						        Config_rx_mode();    
-                                direct_meas_mode_requested = true;    // we will not try in the next iteration if failed, the user is supposed ask again later
                             }
                         
                         
@@ -392,7 +397,7 @@ int main(int argc, char **argv)
                             {
                                 instrument.DoMeasure(false);
                                 if(!instrument.getLastMeasurementValues(HA, VA, Dist, Time_sec)){
-				                    Lora_send_measurement(theodolite_number, error_theodolite, HA, VA, Dist, floor(Time_sec), Time_sec-floor(Time_sec));
+				                    Lora_send_measurement(theodolite_number, 0, HA, VA, Dist, floor(Time_sec), Time_sec-floor(Time_sec));
                                 }
                             }
 
@@ -452,8 +457,10 @@ int main(int argc, char **argv)
 		{
             Received_data_check();
             if(received_data_for_me){
+                ROS_INFO("Data for me!");
 
                 if(direct_meas_mode_requested && !direct_meas_mode_active){                                        // turn the direct measurement on
+                    ROS_INFO("Swithing to the Direct Measurement mode.");                    
                     std::string response;
                     response = "dOk"; 
                     direct_meas_mode_active = true;
@@ -461,9 +468,10 @@ int main(int argc, char **argv)
                     Config_tx_mode();
                     txlora(response);
 		            Config_rx_mode();    
-                    direct_meas_mode_requested = false;
+                    
                 }
                 if(!direct_meas_mode_requested && direct_meas_mode_active){                                                 // turn the direct measurement off
+                    ROS_INFO("Swithing to the Tracking mode.");
                     std::string response;
                     response = "nOk"; 
                     direct_meas_mode_active = false;
@@ -471,15 +479,17 @@ int main(int argc, char **argv)
                     Config_tx_mode();
                     txlora(response);
 		            Config_rx_mode();    
-                    direct_meas_mode_requested = true;
+                    
                 }
     	        if(!synchronization_mode && received_t_command && !direct_meas_mode_active)
                 {
+                    ROS_INFO("Sending dummy measuremnt in the tracking mode.");
                     Lora_send_measurement(9, 0, 1.234, 5.678, 666.1, 1598131342.0, 388808162.0);
                 }
                 if(!synchronization_mode && received_t_command && direct_meas_mode_active)
                 {
                     sleep(1.0);
+                    ROS_INFO("Sending dummy measuremnt in the Direct Measurement mode.");
                     Lora_send_measurement(9, 0, 4.321, 8.765, 333.2, 1598131342.0, 388808162.0);
                 }
                 
