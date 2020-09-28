@@ -18,6 +18,8 @@
 #include <chrono>
 
 #define RECEIVE_TIMEOUT_MS 2000
+#define TIME_BEFORE_NEXT_TX_ATTEMPT 10000
+#define MAX_ATTEMPTS_BEFORE_SHUTDOWN 3
 
 using namespace std;
 
@@ -132,10 +134,7 @@ void Received_data_check()
             
                     if(receivedbytes == 3)
                     {
-                        std::cout << "Three bytes" << std::endl;
                         if(message[0] == 'd'){
-                            std::cout << "d in the beginning" << std::endl;
-                            
                             if(message[1] == 'O' && message[2] == 'k') {received_dOk = true; received_data = true; break;}
                             else if (message[1] == 'N' && message[2] == 'o') {received_dNo = true; received_data = true; break;}                            
                         }
@@ -161,7 +160,7 @@ void Received_data_check()
             if(std::chrono::steady_clock::now() - start > std::chrono::milliseconds(RECEIVE_TIMEOUT_MS))
             {
                received_data = false;
-               std::cout << "Still waiting for radio message..." << std::endl;
+               std::cout << "Waiting..." << std::endl;
                break;
             }
         }
@@ -196,10 +195,13 @@ int main(int argc, char **argv)
     
     std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure;
     std::vector<TheodoliteState> theodolite_states;
+    std::vector<int> theodolite_attempts;
 
     int number_of_theodolites = 0;
     int number_of_markers = 0;
     int theodolite_currently_talked_to = 0;
+
+    std::chrono::steady_clock::time_point time_waiting_start;
     
     State s = INIT;
 
@@ -239,50 +241,45 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                markers_data_structure.reserve(number_of_theodolites);
-                for (auto & markers_per_theodolite : markers_data_structure) {
-                    markers_per_theodolite = std::vector<TheodoliteMeasurement>();
-                    markers_per_theodolite.reserve(number_of_markers);
-                }
-
-                theodolite_states.reserve(number_of_theodolites);
-                for (auto & theodolite_state : theodolite_states) {
-                    theodolite_state = UNKNOWN;
-                }
-
+                markers_data_structure = std::vector<std::vector<TheodoliteMeasurement>>(number_of_theodolites, std::vector<TheodoliteMeasurement>(number_of_markers));
+                theodolite_states = std::vector<TheodoliteState>(number_of_theodolites, UNKNOWN);
+                theodolite_attempts = std::vector<int>(number_of_theodolites, 0);
+                
                 std::cout << "Memory reserved for the coordinates." << std::endl;       
                 s = SWITCH_THEODOLITES;
             break;
 
             case SWITCH_THEODOLITES:
     
-                theodolite_currently_talked_to = 1;
+                theodolite_currently_talked_to = 0;
         
                 for (auto & theodolite_state : theodolite_states) {
                     if(theodolite_state == UNKNOWN) break;                    
                     else theodolite_currently_talked_to++;                                       
                 }
                 
-                if(theodolite_currently_talked_to > number_of_theodolites){
+                if(theodolite_currently_talked_to == number_of_theodolites){
                     std::cout << "All theodolites in Direct Mode, let's go to the next step." << std::endl; 
                     s = COLLECT;
                     continue;
                 }else{    
-                    std::cout << "Switching theodolite n." << theodolite_currently_talked_to << " to Direct Mode." << std::endl;
+                    std::cout << "Switching theodolite n." << theodolite_currently_talked_to+1 << " to Direct Mode." << std::endl;
                 }
             
                 Config_tx_mode();
-                tmp_string = "d" + std::to_string(theodolite_currently_talked_to);
+                tmp_string = "d" + std::to_string(theodolite_currently_talked_to+1);
                 txlora(tmp_string);
-                Config_rx_mode();   
+                Config_rx_mode();
+                time_waiting_start = std::chrono::steady_clock::now();
+                theodolite_attempts[theodolite_currently_talked_to] ++;
+                std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " to reply." << std::endl;
                     
                 s = WAIT_FOR_SWITCH_SUCCESS;
                 
             break;
 
             case WAIT_FOR_SWITCH_SUCCESS:
-                // Receive the message if there is one
-                std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to << " to reply." << std::endl;
+                // Receive the message if there is one             
                 Received_data_check();
                 if(received_data){
                     if(received_dOk){
@@ -300,6 +297,17 @@ int main(int argc, char **argv)
                         std::cout << "Received something, but not what we expected. Still waiting." << std::endl;
                         continue;
                     }
+                }
+                if(std::chrono::steady_clock::now() - time_waiting_start > std::chrono::milliseconds(TIME_BEFORE_NEXT_TX_ATTEMPT)){
+                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " took longer than " << std::to_string(TIME_BEFORE_NEXT_TX_ATTEMPT/1000) << "s. ";
+                    if(theodolite_attempts[theodolite_currently_talked_to] >= MAX_ATTEMPTS_BEFORE_SHUTDOWN){
+                        std::cout << "Maximum number of attempts reached. Sorry, shutting down." << std::endl;
+                        ros::shutdown();
+                        continue;
+                    }
+                    std::cout << "Maybe packet lost. Will attempt again." << std::endl;
+                    s = SWITCH_THEODOLITES;
+                    continue;
                 }
             break;
             
