@@ -36,6 +36,7 @@ bool received_dOk = false;
 bool received_dNo = false;
 bool received_nOk = false;
 bool received_nNo = false;
+bool received_measurement = false;
 
 byte status;
 byte theodolite_number;
@@ -54,7 +55,9 @@ struct TheodoliteMeasurement{
     double meas_distance;
     uint32_t sec;
     uint32_t nsec;
-};
+
+    TheodoliteMeasurement():theodolite_number(0), status(255), azimuth(0.0), elevation(0.0), meas_distance(0.0), sec(0), nsec(0){};
+};    
      
 
 void Received_data_check()
@@ -72,6 +75,7 @@ void Received_data_check()
     received_dNo = false;
     received_nOk = false;
     received_nNo = false;
+    received_measurement = false;
 
 
     while(received_data == false)
@@ -109,7 +113,13 @@ void Received_data_check()
                         else{
                             ROS_INFO("Not a coordinate messsage or malformed.");                        
                         }
-                        received_data = true;
+
+                        if(!corrupted_message){
+                            received_data = true;
+                            received_measurement = true;
+                        }else{
+                            received_data = true;
+                        }
                         break;
                     }
                        
@@ -170,6 +180,27 @@ void Received_data_check()
 }
 
 
+void print_marker_table(std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure){
+    int number_of_theodolites = markers_data_structure.size();
+    if(!number_of_theodolites) return;
+    int number_of_markers = markers_data_structure[0].size();
+    if(!number_of_markers) return;
+
+    std::cout << std::endl << "Markers collected so far: (X == not yet, ▓ == collected)" << std::endl ;
+    std::cout << "Theodolite:\t| " ;
+    for(int i = 0; i < number_of_theodolites; i++){
+        std::cout << i+1 << "\t| " ;        
+    }
+    std::cout << std::endl;
+
+    for(int i = 0; i < number_of_markers; i++){
+        std::cout << "Marker " << i+1 << ":\t| ";
+        for(int j = 0; j < number_of_theodolites; j++){
+            std::cout << (markers_data_structure[j][i].status==255 ? "X" : "▓") << "\t| ";        
+        }
+        std::cout << std::endl;
+    }
+}
 
 
 // #############################################
@@ -190,7 +221,7 @@ int main(int argc, char **argv)
 
     //general variables
     std::string tmp_string;
-    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, WAIT_REPLY };
+    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, WAIT_REPLY, SAVE_QUIT};
     enum TheodoliteState { UNKNOWN, DIRECT_MEASUREMENT, TRACKING };
     
     std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure;
@@ -200,6 +231,7 @@ int main(int argc, char **argv)
     int number_of_theodolites = 0;
     int number_of_markers = 0;
     int theodolite_currently_talked_to = 0;
+    int marker_currently_waited_for = 0;
 
     std::chrono::steady_clock::time_point time_waiting_start;
     
@@ -241,12 +273,21 @@ int main(int argc, char **argv)
                     continue;
                 }
 
+                if(number_of_theodolites < 1 || number_of_markers < 1){
+                    std::cout << std::endl << "Zero or minus number of theodolites or markers. C'mon... " << std::endl;
+                    continue;
+                }                
+
                 markers_data_structure = std::vector<std::vector<TheodoliteMeasurement>>(number_of_theodolites, std::vector<TheodoliteMeasurement>(number_of_markers));
                 theodolite_states = std::vector<TheodoliteState>(number_of_theodolites, UNKNOWN);
                 theodolite_attempts = std::vector<int>(number_of_theodolites, 0);
                 
-                std::cout << "Memory reserved for the coordinates." << std::endl;       
+                std::cout << "Memory reserved for the coordinates." << std::endl;
+                print_marker_table(markers_data_structure);
+                std::cout << std::endl;
+                                       
                 s = SWITCH_THEODOLITES;
+                //s = COLLECT;
             break;
 
             case SWITCH_THEODOLITES:
@@ -259,7 +300,8 @@ int main(int argc, char **argv)
                 }
                 
                 if(theodolite_currently_talked_to == number_of_theodolites){
-                    std::cout << "All theodolites in Direct Mode, let's go to the next step." << std::endl; 
+                    std::cout << "All theodolites in Direct Mode, let's go to the next step." << std::endl;
+                    theodolite_currently_talked_to = 0; 
                     s = COLLECT;
                     continue;
                 }else{    
@@ -312,23 +354,103 @@ int main(int argc, char **argv)
             break;
             
             case COLLECT:
-                ros::shutdown();
+                print_marker_table(markers_data_structure);
+                std::cout << "To choose a theodolite: t[x]. To request a mesurement: m[x]. To exit CTRL+D. Currently selected theodolite n." << theodolite_currently_talked_to+1 << std::endl;
+                std::cout << "Input: ";
+                
+                std::getline(std::cin, tmp_string);
+                if(std::cin.eof()){
+                        std::cout << std::endl << "EOF received, saving and shutting down." << std::endl;
+                        s = SAVE_QUIT;                        
+                        continue;
+                }
+                if(tmp_string.length() < 2) continue;
+                if(tmp_string[0]=='t'){
+                
+                    try{
+                        theodolite_currently_talked_to = stoi(tmp_string.substr(1, std::string::npos)) - 1;
+                    }                
+                    catch (exception& e){
+                        std::cout << std::endl << "Invalid input." << std::endl;
+                        continue;
+                    }
+                    if(theodolite_currently_talked_to < 0 || theodolite_currently_talked_to >= number_of_theodolites){
+                        std::cout << "Invalid theodolite number." << std::endl;
+                        theodolite_currently_talked_to = 0;
+                    }
 
-            /*
-            // Tx configuration to call theodolite targeted
-            Config_tx_mode();
-            txlora(toProcess.front());
-            // Rx configuration to read the message send by the theodolite called
-            Config_rx_mode();
-            */
-            
+                    continue;
+                }
+
+                if(tmp_string[0]=='m'){
+                
+                    try{
+                        marker_currently_waited_for = stoi(tmp_string.substr(1, std::string::npos)) - 1;
+                    }                
+                    catch (exception& e){
+                        std::cout << std::endl << "Invalid input." << std::endl;
+                        continue;
+                    }
+                    if(marker_currently_waited_for < 0 || marker_currently_waited_for >= number_of_markers){
+                        std::cout << "Invalid marker number." << std::endl;
+                        continue;
+                        
+                    }
+                    std::cout << "Requesting measurement of the marker " << marker_currently_waited_for+1 
+                        << " from theodolite " << theodolite_currently_talked_to << std::endl;
+                    
+                    Config_tx_mode();
+                    tmp_string = "t" + std::to_string(theodolite_currently_talked_to+1);
+                    txlora(tmp_string);
+                    Config_rx_mode();
+                    time_waiting_start = std::chrono::steady_clock::now();
+                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " to reply with the measurement." << std::endl;
+                    s = WAIT_REPLY;
+                    continue;
+                }
+                        
+                continue;
             break;
         
             case WAIT_REPLY:
                    
                 // Received the message if there is one
                 Received_data_check();
+                if(received_data){
+                    if(received_measurement){
+                        if(status!=0){
+                            std::cout << "The theodolite responded with a non-zero status: " << (int)status << "which means an error. Check it." << std::endl;
+                        }
+                        else{
+                            std::cout << "Success! Storing the data." << std::endl;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].status = status;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].theodolite_number = theodolite_number;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].elevation = elevation;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].azimuth = azimuth;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance = meas_distance;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].sec = secs;
+                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].nsec = nsecs;
+                        }                        
+                        s = COLLECT;
+                        continue;
+                    }
+                    else{
+                        std::cout << "Received something, but not what we expected. Still waiting." << std::endl;
+                        continue;
+                    }
+                }
+                if(std::chrono::steady_clock::now() - time_waiting_start > std::chrono::milliseconds(TIME_BEFORE_NEXT_TX_ATTEMPT)){
+                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " took longer than " << std::to_string(TIME_BEFORE_NEXT_TX_ATTEMPT/1000) << "s. ";
+                    std::cout << "Maybe packet lost. Try again." << std::endl;
+                    s = COLLECT;
+                    continue;
+                }
             
+            break;
+
+            case SAVE_QUIT:
+                ros::shutdown();
+                continue;
             break;
         }
         sleep(0.01);   
