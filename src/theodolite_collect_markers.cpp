@@ -7,6 +7,7 @@
 #include "radio_message_serialize.h"
 
 #include <sstream>
+#include <fstream>
 #include <chrono>
 #include <math.h>
 
@@ -449,6 +450,21 @@ int main(int argc, char **argv)
             break;
 
             case SAVE_QUIT:
+                ofstream output_file;
+                output_file.open("theodolite_reference_markers.txt", ios::out | ios::trunc);
+                output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec" << std::endl;
+                for(int i = 0; i < number_of_theodolites; i++){
+                    for(int j = 0; j < number_of_markers; j++){
+                        output_file << i+1 << " , " << j+1 
+                            << " , " << (int)markers_data_structure[i][j].status 
+                            << " , " << markers_data_structure[i][j].elevation
+                            << " , " << markers_data_structure[i][j].azimuth
+                            << " , " << markers_data_structure[i][j].meas_distance
+                            << " , " << markers_data_structure[i][j].sec
+                            << " , " << markers_data_structure[i][j].nsec << std::endl;         
+                    }
+                }
+                output_file.close();
                 ros::shutdown();
                 continue;
             break;
