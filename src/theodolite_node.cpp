@@ -248,25 +248,25 @@ int main(int argc, char **argv)
 {
 	// Set up ROS.
     ros::init(argc, argv, "theodolite_node");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
 
 
     //Get parameters
     //Theodolite number (to differentiate data if many theodolites target one prism)
-    n.getParam("/theodolite_node/theodolite_number", theodolite_number);
+    n.getParam("theodolite_number", theodolite_number);
     //Number of target prism
     int target_prism = 0;
-    n.getParam("/theodolite_node/target_prism", target_prism); 
+    n.getParam("target_prism", target_prism); 
     //Number of measurements decided   
     int number_of_measurements_choice = 10;
-    n.getParam("/theodolite_node/number_of_measurments", number_of_measurements_choice);    
+    n.getParam("number_of_measurments", number_of_measurements_choice);    
     bool use_lora = false;
-    n.getParam("/theodolite_node/use_lora", use_lora);
-    n.getParam("/theodolite_node/show_data", show_data);
+    n.getParam("use_lora", use_lora);
+    n.getParam("show_data", show_data);
     bool test_lora = false;
-    n.getParam("/theodolite_node/test_lora", test_lora);
+    n.getParam("test_lora", test_lora);
     int test_rate = 10;
-    n.getParam("/theodolite_node/test_rate", test_rate);
+    n.getParam("test_rate", test_rate);
     ros::Rate loop_rate(test_rate);
 
     printf("\n");

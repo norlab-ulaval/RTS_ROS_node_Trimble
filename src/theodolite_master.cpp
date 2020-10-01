@@ -355,12 +355,12 @@ void Synchronization_call(int number_of_ping, int number_theodolite_pinged, ros:
 int main(int argc, char **argv)
 {
     //ROS init
-    ros::init(argc, argv, "theodolite_listener");
-    ros::NodeHandle n;
+    ros::init(argc, argv, "theodolite_master");
+    ros::NodeHandle n("~");
     //Publisher of the data in a vector
     ros::Publisher data_pub = n.advertise<theodolite_node_msgs::TheodoliteCoordsStamped>("theodolite_data", 10);
     ros::Publisher correction_pub = n.advertise<theodolite_node_msgs::TheodoliteTimeCorrection>("theodolite_correction_timestamp", 10);
-    n.getParam("/theodolite_listener/rate", rate);
+    n.getParam("rate", rate);
     //Set the rate of the listener
     if(rate >100 or rate<1)
     {
@@ -369,12 +369,12 @@ int main(int argc, char **argv)
     }
     ros::Rate loop_rate(rate);
     //Get number of theodolite involved
-    n.getParam("/theodolite_listener/number_of_theodolite", number_of_theodolite);
-    n.getParam("/theodolite_listener/show_data", show_data);
-    n.getParam("/theodolite_listener/number_first_synchronization", number_first_synchronization);
-    n.getParam("/theodolite_listener/number_others_synchronization", number_others_synchronization);
-    n.getParam("/theodolite_listener/delay_synchronization_theodolite", delay_synchronization_theodolite);
-    n.getParam("/theodolite_listener/delay_synchronization_between_theodolite", delay_synchronization_between_theodolite);
+    n.getParam("number_of_theodolite", number_of_theodolite);
+    n.getParam("show_data", show_data);
+    n.getParam("number_first_synchronization", number_first_synchronization);
+    n.getParam("number_others_synchronization", number_others_synchronization);
+    n.getParam("delay_synchronization_theodolite", delay_synchronization_theodolite);
+    n.getParam("delay_synchronization_between_theodolite", delay_synchronization_between_theodolite);
 
     //Configure LoRa antenna
     General_setup_lora();
