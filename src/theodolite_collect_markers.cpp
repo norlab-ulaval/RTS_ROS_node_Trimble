@@ -222,7 +222,7 @@ int main(int argc, char **argv)
 
     //general variables
     std::string tmp_string;
-    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, WAIT_REPLY, SAVE_QUIT};
+    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, WAIT_REPLY, SAVE, SWITCH_TO_TRACKING, WAIT_FOR_SWITCH2_SUCCESS, QUIT};
     enum TheodoliteState { UNKNOWN, DIRECT_MEASUREMENT, TRACKING };
     
     std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure;
@@ -362,7 +362,7 @@ int main(int argc, char **argv)
                 std::getline(std::cin, tmp_string);
                 if(std::cin.eof()){
                         std::cout << std::endl << "EOF received, saving and shutting down." << std::endl;
-                        s = SAVE_QUIT;                        
+                        s = SAVE;                        
                         continue;
                 }
                 if(tmp_string.length() < 2) continue;
@@ -449,22 +449,93 @@ int main(int argc, char **argv)
             
             break;
 
-            case SAVE_QUIT:
-                ofstream output_file;
-                output_file.open("theodolite_reference_markers.txt", ios::out | ios::trunc);
-                output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec" << std::endl;
-                for(int i = 0; i < number_of_theodolites; i++){
-                    for(int j = 0; j < number_of_markers; j++){
-                        output_file << i+1 << " , " << j+1 
-                            << " , " << (int)markers_data_structure[i][j].status 
-                            << " , " << markers_data_structure[i][j].elevation
-                            << " , " << markers_data_structure[i][j].azimuth
-                            << " , " << markers_data_structure[i][j].meas_distance
-                            << " , " << markers_data_structure[i][j].sec
-                            << " , " << markers_data_structure[i][j].nsec << std::endl;         
+            case SAVE:
+                {
+                    ofstream output_file;
+                    output_file.open("theodolite_reference_markers.txt", ios::out | ios::trunc);
+                    output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec" << std::endl;
+                    for(int i = 0; i < number_of_theodolites; i++){
+                        for(int j = 0; j < number_of_markers; j++){
+                            output_file << i+1 << " , " << j+1 
+                                << " , " << (int)markers_data_structure[i][j].status 
+                                << " , " << markers_data_structure[i][j].elevation
+                                << " , " << markers_data_structure[i][j].azimuth
+                                << " , " << markers_data_structure[i][j].meas_distance
+                                << " , " << markers_data_structure[i][j].sec
+                                << " , " << markers_data_structure[i][j].nsec << std::endl;         
+                        }
+                    }
+                    output_file.close();
+                }
+                theodolite_attempts = std::vector<int>(number_of_theodolites, 0);
+                s = SWITCH_TO_TRACKING;
+                continue;
+            break;
+
+            case SWITCH_TO_TRACKING:
+                theodolite_currently_talked_to = 0;
+        
+                for (auto & theodolite_state : theodolite_states) {
+                    if(theodolite_state == DIRECT_MEASUREMENT) break;                    
+                    else theodolite_currently_talked_to++;                                       
+                }
+                
+                if(theodolite_currently_talked_to == number_of_theodolites){
+                    std::cout << "All theodolites back in Tracking Mode or to be switched manually, we are done." << std::endl;
+                    theodolite_currently_talked_to = 0; 
+                    s = QUIT;
+                    continue;
+                }else{    
+                    std::cout << "Switching theodolite n." << theodolite_currently_talked_to+1 << " to Tracking Mode." << std::endl;
+                }
+            
+                Config_tx_mode();
+                tmp_string = "n" + std::to_string(theodolite_currently_talked_to+1);
+                txlora(tmp_string);
+                Config_rx_mode();
+                time_waiting_start = std::chrono::steady_clock::now();
+                theodolite_attempts[theodolite_currently_talked_to] ++;
+                std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " to reply." << std::endl;
+                    
+                s = WAIT_FOR_SWITCH2_SUCCESS;
+
+            break;
+
+            case WAIT_FOR_SWITCH2_SUCCESS:
+                // Receive the message if there is one             
+                Received_data_check();
+                if(received_data){
+                    if(received_nOk){
+                        std::cout << "Success! Proceeding." << std::endl;
+                        theodolite_states[theodolite_currently_talked_to] = TRACKING;
+                        s = SWITCH_TO_TRACKING;
+                        continue;
+                    }
+                    if(received_nNo){
+                        std::cout << "Theodolite " << theodolite_currently_talked_to << " reported error while switching to the tracking mode! Restart it manually." << std::endl;
+                        theodolite_states[theodolite_currently_talked_to] = UNKNOWN;
+                        continue;
+                    }
+                else{
+                        std::cout << "Received something, but not what we expected. Still waiting." << std::endl;
+                        continue;
                     }
                 }
-                output_file.close();
+                if(std::chrono::steady_clock::now() - time_waiting_start > std::chrono::milliseconds(TIME_BEFORE_NEXT_TX_ATTEMPT)){
+                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " took longer than " << std::to_string(TIME_BEFORE_NEXT_TX_ATTEMPT/1000) << "s. ";
+                    if(theodolite_attempts[theodolite_currently_talked_to] >= MAX_ATTEMPTS_BEFORE_SHUTDOWN){
+                        std::cout << "Maximum number of attempts to switch theo. " << theodolite_currently_talked_to+1 << " reached.. Do it manually." << std::endl;
+                        theodolite_states[theodolite_currently_talked_to] = UNKNOWN;
+                        continue;
+                    }
+                    std::cout << "Maybe packet lost. Will attempt again." << std::endl;
+                    s = SWITCH_TO_TRACKING;
+                    continue;
+                }
+                
+            break;
+
+            case QUIT:
                 ros::shutdown();
                 continue;
             break;
