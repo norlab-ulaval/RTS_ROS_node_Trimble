@@ -395,9 +395,14 @@ int main(int argc, char **argv)
                             }
                             if(!synchronization_mode && received_t_command && direct_meas_mode_active)
                             {
-                                instrument.DoMeasure(false);
-                                if(!instrument.getLastMeasurementValues(HA, VA, Dist, Time_sec)){
-				                    Lora_send_measurement(theodolite_number, 0, HA, VA, Dist, floor(Time_sec), Time_sec-floor(Time_sec));
+                                if(!instrument.DoMeasure(false)){
+                                    if(!instrument.getLastMeasurementValues(HA, VA, Dist, Time_sec))
+				                        Lora_send_measurement(theodolite_number, 0, HA, VA, Dist, floor(Time_sec), Time_sec-floor(Time_sec));
+                                    else 
+                                        Lora_send_measurement(theodolite_number, 3, 0.0, 0.0, 0.0, 0.0, 0.0);
+                                }
+                                else{
+                                    Lora_send_measurement(theodolite_number, 3, 0.0, 0.0, 0.0, 0.0, 0.0);
                                 }
                             }
 
