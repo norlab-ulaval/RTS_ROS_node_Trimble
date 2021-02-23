@@ -36,6 +36,9 @@ double Time_sec;        //Time sec
 double Time_nsec;        //Time nsec
 int error_theodolite;   //flag for error
 int theodolite_number = 0;
+int target_prism = 0;
+int target_prism_new = 0;
+bool target_prism_change_requested = false;
 bool received_data_for_me = false;
 bool received_t_command = false;
 bool show_data = false;
@@ -146,7 +149,19 @@ void Received_data_check()
                         received_data_for_me = true;
                         synchronization_mode = false;
 						received_t_command = false;
-                        if(!direct_meas_mode_active){
+
+                        if(receivedbytes >= 3)      // If the user sends three bytes, the third byte is considered to be the literal for the prism to track
+                        {
+                            int prism_number_candidate = message[2] - '0';
+                            if(prism_number_candidate > 0 && prism_number_candidate < 10)
+                            {
+                                prism_number_new = prism_number_candidate;
+                                if(prism_number_new != prism_number) target_prism_change_requested = true;
+                            } 
+                        }
+
+
+                        if(!direct_meas_mode_active && !target_prism_change_requested){
                             sleep(0.01);
                             Config_tx_mode();
                             data = "nOk";
@@ -255,8 +270,8 @@ int main(int argc, char **argv)
     //Theodolite number (to differentiate data if many theodolites target one prism)
     n.getParam("theodolite_number", theodolite_number);
     //Number of target prism
-    int target_prism = 0;
     n.getParam("target_prism", target_prism); 
+    target_prism_new = targer_prism;
     //Number of measurements decided   
     int number_of_measurements_choice = 10;
     n.getParam("number_of_measurments", number_of_measurements_choice);    
