@@ -14,6 +14,7 @@
 #include "Face/ISsiFace.h"
 #include "Targets/ISsiTargets.h"
 #include "Targets/IDirectReflexTarget.h"
+#include "Targets/IDirectReflexAdvancedTarget.h"
 #include "Targets/IPrismTarget.h"
 #include "Targets/IPrismAdvancedTarget.h"
 #include "Targets/ITrimbleMultiTrackTarget.h"
@@ -103,6 +104,22 @@ int SsiInstrument::LoadDriver(const char* sDriver)
 		return -1;
 	}
 	return 0;
+}
+
+std::string SsiInstrument::PrintDriverInformation(){
+    std::string info_text;
+
+    if(_pDriver){
+        info_text = "Id: " + _pDriver->getDriverInformation().getUniqueId() + 
+                    ", Name: " + _pDriver->getDriverInformation().getDisplayName() +
+                    ", Version: " + _pDriver->getDriverInformation().getVersion() + 
+                    ", Copyright: " + _pDriver->getDriverInformation().getCopyright() +
+                    ", Licence: " + _pDriver->getDriverInformation().getLicenseName();
+    }else{
+        info_text = "No driver loaded";
+    }
+
+    return info_text;
 }
 
 int SsiInstrument::Connect(const char* sType, const char* sPort)
@@ -382,6 +399,14 @@ int SsiInstrument::DoMeasure(bool bAngleonly)
 	return 0;
 }
 
+int SsiInstrument::getLastMeasurementValues(double& HA, double& VA, double& dist, double& time){
+    if(_pCallback){
+        _pCallback->getLastMeasuremntValues(HA, VA, dist, time);
+        return 0;    
+    }
+    return -1;
+}
+
 int SsiInstrument::Tracking(bool bStart, int param)
 {
 	return Tracking(bStart, _pCallback ,param);
@@ -492,6 +517,14 @@ int SsiInstrument::Target(int mode, int target_id)
 		{
 			SSI::IDirectReflexTarget* target = (SSI::IDirectReflexTarget*)theInterface->createTarget(SSI::TT_DirectReflex);
 			target->setLaserPointerActive(true);
+			theInterface->setTarget(*target);
+            delete target;
+		}
+        else if(mode == MODE_DR_WEAK)
+		{
+			SSI::IDirectReflexAdvancedTarget* target = (SSI::IDirectReflexAdvancedTarget*)theInterface->createTarget(SSI::TT_DirectReflexAdvanced);
+			target->setLaserPointerActive(false);
+            target->useWeakSignal(true);
 			theInterface->setTarget(*target);
             delete target;
 		}

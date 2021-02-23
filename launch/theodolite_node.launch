@@ -1,5 +1,5 @@
 <launch>
-    <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen">
+    <node name="theodolite_node" type="theodolite_node" pkg="theodolite_node" output="screen" respawn="true">
 
         <!-- Parameter to set the theodolite number (should be between 1 and 8)-->
         <param name="theodolite_number" value= "1" />

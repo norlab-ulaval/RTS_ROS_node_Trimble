@@ -1,0 +1,8 @@
+<launch>
+    <node name="theodolite_collect_markers" type="theodolite_collect_markers" pkg="theodolite_node" output="screen">
+
+        <!-- Parameter to show data on terminal if needed. Set True to use it -->
+        <param name="show_data" value= "true" />
+
+	</node>
+</launch>

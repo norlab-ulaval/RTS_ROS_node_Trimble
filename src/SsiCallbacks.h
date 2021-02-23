@@ -37,6 +37,8 @@ public:
     void OnIdleAngles(const SSI::SphericalAngles& angles);
 	void OnImage(SSI::IImageCapture& image);
 
+    void getLastMeasuremntValues(double& HA, double& VA, double& dist, double& time);
+
     /*ICurrentPowerSourceChangedListener*/
     virtual void onCurrentPowerSourceChanged(const SSI::PowerSourceEvent& powerSourceEvent);
 
@@ -62,6 +64,11 @@ public:
     virtual void tiltStateChanged(const SSI::TiltStateChangedEvent& tiltStateChangedEvent);
 
 private:
+
+    double last_measurement_HA;
+    double last_measurement_VA;
+    double last_measurement_dist;
+    double last_measurement_time;
 };
 
 #endif
