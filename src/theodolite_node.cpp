@@ -155,13 +155,13 @@ void Received_data_check()
                             int prism_number_candidate = message[2] - '0';
                             if(prism_number_candidate > 0 && prism_number_candidate < 10)
                             {
-                                prism_number_new = prism_number_candidate;
-                                if(prism_number_new != prism_number) target_prism_change_requested = true;
+                                target_prism_new = prism_number_candidate;
+                                if(target_prism_new != target_prism) target_prism_change_requested = true;
                             } 
                         }
 
 
-                        if(!direct_meas_mode_active && !target_prism_change_requested){
+                        if(!direct_meas_mode_active && !target_prism_change_requested){    // there is nothing to do, reply Ok now 
                             sleep(0.01);
                             Config_tx_mode();
                             data = "nOk";
@@ -271,7 +271,7 @@ int main(int argc, char **argv)
     n.getParam("theodolite_number", theodolite_number);
     //Number of target prism
     n.getParam("target_prism", target_prism); 
-    target_prism_new = targer_prism;
+    target_prism_new = target_prism;
     //Number of measurements decided   
     int number_of_measurements_choice = 10;
     n.getParam("number_of_measurments", number_of_measurements_choice);    
@@ -365,7 +365,9 @@ int main(int argc, char **argv)
                         if(received_data_for_me)
                         {
                         
-                            if(direct_meas_mode_requested && !direct_meas_mode_active){                                        // turn the direct measurement on
+                            if(direct_meas_mode_requested && !direct_meas_mode_active)  // turn the direct measurement on
+                            {                                        
+                                ROS_INFO("Switching to the direct measurement mode...");
                                 bool something_went_wrong = false;                                                             // we can spot a problem
                                 if(instrument.Tracking(false, observation_listener.get())) something_went_wrong = true;        // stop the tracking mode
                                 if(!something_went_wrong){
@@ -376,31 +378,74 @@ int main(int argc, char **argv)
                                 if(something_went_wrong) {
                                     response = "dNo";
                                     direct_meas_mode_requested = false;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                                    ROS_INFO("Switching to the direct measurement mode... FAIL");
                                 }
-                                else {response = "dOk"; direct_meas_mode_active = true;}
+                                else {response = "dOk"; direct_meas_mode_active = true; ROS_INFO("Switching to the direct measurement mode... SUCCESS");}
                                 
                                 Config_tx_mode();
                                 txlora(response);
 						        Config_rx_mode();    
                                 
                             }
-                            if(!direct_meas_mode_requested && direct_meas_mode_active){                                                 // turn the direct measurement off
+                            if(!direct_meas_mode_requested && direct_meas_mode_active)   // turn the direct measurement off
+                            {                                                 
+                                ROS_INFO("Switching to the tracking mode...");
                                 bool something_went_wrong = false;                                                                      // we can spot a problem
-                                if(instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism)) something_went_wrong = true;        // switch to the prism mode
+                                if(instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism_new)) something_went_wrong = true;        // switch to the prism mode
                                 if(!something_went_wrong){
+                                    target_prism = target_prism_new;   // we have succesfully set the newly requested prism number. If there was no request, this does nothing
+                                    target_prism_change_requested = false;  // same for this, if there was the request, is is fullfilled now                                     
                                     if(instrument.Tracking(true, observation_listener.get())) something_went_wrong = true;   // start tracking the prism again
                                 }
                                 
                                 std::string response;
                                 if(something_went_wrong){
                                     response = "nNo";
+                                    target_prism_new = target_prism; // we will not do the new prism number
+                                    target_prism_change_requested = false;  // we have tried at least
                                     direct_meas_mode_requested = true;    // we will not try in the next iteration if failed, the user is supposed ask again later
+                                    ROS_INFO("Switching to the tracking mode... FAIL");
                                 }
-                                else {response = "nOk"; direct_meas_mode_active = false;}
+                                else {response = "nOk"; direct_meas_mode_active = false; ROS_INFO("Switching to the tracking mode... SUCCESS");}
                                 
                                 Config_tx_mode();
                                 txlora(response);
 						        Config_rx_mode();    
+                            }
+
+                            if(target_prism_change_requested)              // this can happen when we are in tracking mode and the master requests tracking mode with a different prism number
+                            {
+                                ROS_INFO("Switching the prims number... ");
+                                bool something_went_wrong = false;                                                             // we can spot a problem
+                                
+                                if(instrument.Tracking(false, observation_listener.get())) something_went_wrong = true;        // stop the tracking mode
+                                if(!something_went_wrong){
+                                    if(instrument.Target(SsiInstrument::MODE_MULTITRACK, target_prism_new)) something_went_wrong = true;   // switch to the tracking mode with new prism number
+                                }
+                                if(!something_went_wrong){
+                                    target_prism = target_prism_new;   // we have succesfully set the newly requested prism number. If there was no request, this does nothing
+                                    target_prism_change_requested = false;  // same for this, if there was the request, is is fullfilled now
+                                    if(instrument.Tracking(true, observation_listener.get())) something_went_wrong = true;   // start tracking the prism again
+                                }
+                                
+                                std::string response;
+                                if(something_went_wrong) {
+                                    response = "nNo";
+                                    target_prism_new = target_prism; // we will not do the new prism number
+                                    target_prism_change_requested = false;  // we have tried at least
+                                    ROS_INFO("Switching the prims number... FAIL");
+                                }
+                                else 
+                                {
+                                    response = "nOk"; 
+                                    target_prism = target_prism_new;   // we have succesfully set the newly requested prism number. If there was no request, this does nothing
+                                    target_prism_change_requested = false;  // same for this, if there was the request, is is fullfilled now
+                                    ROS_INFO("Switching the prims number... SUCCESS ");
+                                }
+                                
+                                Config_tx_mode();
+                                txlora(response);
+						        Config_rx_mode();
                             }
                         
                         
