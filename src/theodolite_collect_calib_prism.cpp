@@ -20,6 +20,7 @@
 
 #define RECEIVE_TIMEOUT_MS 2000
 #define TIME_BEFORE_NEXT_TX_ATTEMPT 10000
+#define TIME_BEFORE_NEXT_TX_ATTEMPT_COLLECT 2000
 #define MAX_ATTEMPTS_BEFORE_SHUTDOWN 3
 
 using namespace std;
@@ -46,6 +47,7 @@ double azimuth;
 double meas_distance;
 uint32_t secs;
 uint32_t nsecs;
+uint32_t former_nsecs=0;
 
 
 struct TheodoliteMeasurement{
@@ -60,6 +62,7 @@ struct TheodoliteMeasurement{
     TheodoliteMeasurement():theodolite_number(0), status(255), azimuth(0.0), elevation(0.0), meas_distance(0.0), sec(0), nsec(0){};
 };    
      
+std::list<TheodoliteMeasurement> list_direct_measurement = {};
 
 void Received_data_check()
 {
@@ -221,9 +224,9 @@ int main(int argc, char **argv)
     
     //general variables
     std::string tmp_string;
-    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, WAIT_REPLY, SAVE, SWITCH_TO_TRACKING, WAIT_FOR_SWITCH2_SUCCESS, QUIT};
-    enum TheodoliteState { UNKNOWN, DIRECT_MEASUREMENT, TRACKING };
-    
+    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, COLLECT_MULTIPLE, COLLECT_DATA, WAIT_REPLY, SAVE, SWITCH_TO_TRACKING, WAIT_FOR_SWITCH2_SUCCESS, QUIT};
+    enum TheodoliteState { UNKNOWN, COMMON_PRISM, PRIVATE_PRISM};
+
     std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure;
     std::vector<TheodoliteState> theodolite_states;
     std::vector<int> theodolite_attempts;
@@ -232,6 +235,7 @@ int main(int argc, char **argv)
     int number_of_markers = 0;
     int theodolite_currently_talked_to = 0;
     int marker_currently_waited_for = 0;
+    int prism_used_for_calibration = 1;
 
     std::chrono::steady_clock::time_point time_waiting_start;
     
@@ -258,6 +262,21 @@ int main(int argc, char **argv)
                     continue;
                 }
 
+                std::cout << "What is the prism number used for the calibration ? "; 
+                std::getline(std::cin, tmp_string);
+                try{
+                    prism_used_for_calibration = stoi(tmp_string);
+                }                
+                catch (exception& e){
+                    if(std::cin.eof()){
+                        std::cout << std::endl << "EOF received, shutting down." << std::endl;
+                        ros::shutdown();
+                        continue;
+                    }
+                    std::cout << std::endl << "No no no, you have caused an exception in " << e.what() << ", c'mon..." << std::endl;
+                    continue;
+                }
+
                 std::cout << "How many markers do we have? "; 
                 std::getline(std::cin, tmp_string);
                 try{
@@ -273,8 +292,8 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                if(number_of_theodolites < 1 || number_of_markers < 1){
-                    std::cout << std::endl << "Zero or minus number of theodolites or markers. C'mon... " << std::endl;
+                if(number_of_theodolites < 1 || number_of_markers < 1 || (prism_used_for_calibration < 1 && prism_used_for_calibration > 9)){
+                    std::cout << std::endl << "Zero or minus number of theodolites or markers or prism number. C'mon... " << std::endl;
                     continue;
                 }                
 
@@ -309,7 +328,8 @@ int main(int argc, char **argv)
                 }
             
                 Config_tx_mode();
-                tmp_string = "d" + std::to_string(theodolite_currently_talked_to+1);
+                tmp_string = "n" + std::to_string(theodolite_currently_talked_to+1) + std::to_string(prism_used_for_calibration);
+                std::cout << tmp_string << std::endl;                 
                 txlora(tmp_string);
                 Config_rx_mode();
                 time_waiting_start = std::chrono::steady_clock::now();
@@ -324,13 +344,13 @@ int main(int argc, char **argv)
                 // Receive the message if there is one             
                 Received_data_check();
                 if(received_data){
-                    if(received_dOk){
+                    if(received_nOk){
                         std::cout << "Success! Proceeding." << std::endl;
-                        theodolite_states[theodolite_currently_talked_to] = DIRECT_MEASUREMENT;
+                        theodolite_states[theodolite_currently_talked_to] = COMMON_PRISM;
                         s = SWITCH_THEODOLITES;
                         continue;
                     }
-                    if(received_dNo){
+                    if(received_nNo){
                         std::cout << "Theodolite reported error! Shutting down." << std::endl;
                         ros::shutdown();
                         continue;
@@ -355,7 +375,7 @@ int main(int argc, char **argv)
             
             case COLLECT:
                 print_marker_table(markers_data_structure);
-                std::cout << "To choose a theodolite: t[x]. To request a mesurement: m[x]. To exit CTRL+D. Currently selected theodolite n." << theodolite_currently_talked_to+1 << std::endl;
+                std::cout << "to request a mesurement: d[x]. To exit CTRL+D. Currently selected theodolite n." << theodolite_currently_talked_to+1 << std::endl;
                 std::cout << "Input: ";
                 
                 std::getline(std::cin, tmp_string);
@@ -365,53 +385,74 @@ int main(int argc, char **argv)
                         continue;
                 }
                 if(tmp_string.length() < 2) continue;
-                if(tmp_string[0]=='t'){
-                
+
+                if(tmp_string[0]=='d'){
                     try{
-                        theodolite_currently_talked_to = stoi(tmp_string.substr(1, std::string::npos)) - 1;
+                        marker_currently_waited_for = stoi(tmp_string.substr(1, std::string::npos))-1;
                     }                
-                    catch (exception& e){
+                    catch (exception& e){                  
                         std::cout << std::endl << "Invalid input." << std::endl;
                         continue;
                     }
-                    if(theodolite_currently_talked_to < 0 || theodolite_currently_talked_to >= number_of_theodolites){
-                        std::cout << "Invalid theodolite number." << std::endl;
-                        theodolite_currently_talked_to = 0;
-                    }
-
-                    continue;
-                }
-
-                if(tmp_string[0]=='m'){
-                
-                    try{
-                        marker_currently_waited_for = stoi(tmp_string.substr(1, std::string::npos)) - 1;
-                    }                
-                    catch (exception& e){
-                        std::cout << std::endl << "Invalid input." << std::endl;
+                    if(marker_currently_waited_for < 0 || marker_currently_waited_for >= number_of_markers){                  
+                        std::cout << std::endl << "Invalid marker number." << std::endl;
                         continue;
                     }
-                    if(marker_currently_waited_for < 0 || marker_currently_waited_for >= number_of_markers){
-                        std::cout << "Invalid marker number." << std::endl;
-                        continue;
-                        
-                    }
-                    std::cout << "Requesting measurement of the marker " << marker_currently_waited_for+1 
-                        << " from theodolite " << theodolite_currently_talked_to << std::endl;
-                    
-                    Config_tx_mode();
-                    tmp_string = "t" + std::to_string(theodolite_currently_talked_to+1);
-                    txlora(tmp_string);
-                    Config_rx_mode();
-                    time_waiting_start = std::chrono::steady_clock::now();
-                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " to reply with the measurement." << std::endl;
-                    s = WAIT_REPLY;
-                    continue;
+                    std::cout << std::endl << "Requesting measurement of the marker" << marker_currently_waited_for+1 << std::endl;
+                    theodolite_currently_talked_to=0; 
+                    list_direct_measurement = {};
+                    s = COLLECT_MULTIPLE;    
                 }
                         
                 continue;
             break;
-        
+
+            case COLLECT_MULTIPLE:
+
+                if(list_direct_measurement.size()<=8){
+                    s=COLLECT_DATA;
+                    continue;
+                }
+                else{
+                    for(auto it = list_direct_measurement.begin(); it!= list_direct_measurement.end(); ++it){
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].status = 0;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].theodolite_number = theodolite_currently_talked_to+1;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].elevation += elevation;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].azimuth += azimuth;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance += meas_distance;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].sec = secs;
+                        markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].nsec = nsecs;
+                    }
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].elevation /= list_direct_measurement.size();
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].azimuth /= list_direct_measurement.size();
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance /= list_direct_measurement.size();
+                    list_direct_measurement = {};
+                    theodolite_currently_talked_to+=1;
+
+                    if(theodolite_currently_talked_to == number_of_theodolites){
+                        theodolite_currently_talked_to = 0; 
+                        s = COLLECT;
+                        break;
+                    }else{    
+                        s=COLLECT_MULTIPLE;
+                        break;
+                    }
+                }
+            break;
+
+            case COLLECT_DATA:
+
+                std::cout <<  list_direct_measurement.size() << std::endl;
+                Config_tx_mode();
+                tmp_string = "t" + std::to_string(theodolite_currently_talked_to+1);
+                txlora(tmp_string);
+                Config_rx_mode();
+                time_waiting_start = std::chrono::steady_clock::now();
+                std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " to reply with the measurement." << std::endl;
+                s = WAIT_REPLY;
+                continue;
+            break;
+
             case WAIT_REPLY:
                    
                 // Received the message if there is one
@@ -422,16 +463,24 @@ int main(int argc, char **argv)
                             std::cout << "The theodolite responded with a non-zero status: " << (int)status << "which means an error. Check it." << std::endl;
                         }
                         else{
-                            std::cout << "Success! Storing the data." << std::endl;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].status = status;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].theodolite_number = theodolite_number;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].elevation = elevation;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].azimuth = azimuth;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance = meas_distance;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].sec = secs;
-                            markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].nsec = nsecs;
+                            if(nsecs==former_nsecs){
+                                std::cout << "The theodolite sent the same data." << std::endl;
+                            }
+                            else{
+                                former_nsecs = nsecs;
+                                TheodoliteMeasurement data_received;
+                                data_received.status = status;
+                                data_received.theodolite_number = theodolite_number;
+                                data_received.elevation = elevation;
+                                data_received.azimuth = azimuth;
+                                data_received.meas_distance = meas_distance;
+                                data_received.sec = secs;
+                                data_received.nsec = nsecs;
+                                list_direct_measurement.push_back(data_received);
+                                std::cout << "Success! Storing the data for computation." << std::endl;
+                            }
                         }                        
-                        s = COLLECT;
+                        s = COLLECT_MULTIPLE;
                         continue;
                     }
                     else{
@@ -439,10 +488,10 @@ int main(int argc, char **argv)
                         continue;
                     }
                 }
-                if(std::chrono::steady_clock::now() - time_waiting_start > std::chrono::milliseconds(TIME_BEFORE_NEXT_TX_ATTEMPT)){
-                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " took longer than " << std::to_string(TIME_BEFORE_NEXT_TX_ATTEMPT/1000) << "s. ";
+                if(std::chrono::steady_clock::now() - time_waiting_start > std::chrono::milliseconds(TIME_BEFORE_NEXT_TX_ATTEMPT_COLLECT)){
+                    std::cout << "Waiting for theodolite n." << theodolite_currently_talked_to+1 << " took longer than " << std::to_string(TIME_BEFORE_NEXT_TX_ATTEMPT_COLLECT/1000) << "s. ";
                     std::cout << "Maybe packet lost. Try again." << std::endl;
-                    s = COLLECT;
+                    s = COLLECT_DATA;
                     continue;
                 }
             
@@ -475,7 +524,7 @@ int main(int argc, char **argv)
                 theodolite_currently_talked_to = 0;
         
                 for (auto & theodolite_state : theodolite_states) {
-                    if(theodolite_state == DIRECT_MEASUREMENT) break;                    
+                    if(theodolite_state == COMMON_PRISM) break;                    
                     else theodolite_currently_talked_to++;                                       
                 }
                 
@@ -489,7 +538,7 @@ int main(int argc, char **argv)
                 }
             
                 Config_tx_mode();
-                tmp_string = "n" + std::to_string(theodolite_currently_talked_to+1);
+                tmp_string = "n" + std::to_string(theodolite_currently_talked_to+1) + std::to_string(0);
                 txlora(tmp_string);
                 Config_rx_mode();
                 time_waiting_start = std::chrono::steady_clock::now();
@@ -506,7 +555,7 @@ int main(int argc, char **argv)
                 if(received_data){
                     if(received_nOk){
                         std::cout << "Success! Proceeding." << std::endl;
-                        theodolite_states[theodolite_currently_talked_to] = TRACKING;
+                        theodolite_states[theodolite_currently_talked_to] = PRIVATE_PRISM;
                         s = SWITCH_TO_TRACKING;
                         continue;
                     }
