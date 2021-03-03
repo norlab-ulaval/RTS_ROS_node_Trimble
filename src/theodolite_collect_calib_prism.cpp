@@ -304,6 +304,14 @@ int main(int argc, char **argv)
                 std::cout << "Memory reserved for the coordinates." << std::endl;
                 print_marker_table(markers_data_structure);
                 std::cout << std::endl;
+
+                theodolite_currently_talked_to = 0;
+                for (auto & theodolite_state : theodolite_states) {
+                    if(theodolite_currently_talked_to+1 == prism_used_for_calibration){
+                        theodolite_states[theodolite_currently_talked_to] = COMMON_PRISM;
+                    }                  
+                    theodolite_currently_talked_to++;                                       
+                }
                                        
                 s = SWITCH_THEODOLITES;
                 //s = COLLECT;
