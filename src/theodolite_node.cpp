@@ -36,6 +36,7 @@ double Time_sec;        //Time sec
 double Time_nsec;        //Time nsec
 int error_theodolite;   //flag for error
 int theodolite_number = 0;
+int default_target_prism = 0;
 int target_prism = 0;
 int target_prism_new = 0;
 bool target_prism_change_requested = false;
@@ -157,11 +158,15 @@ void Received_data_check()
                             {
                                 target_prism_new = prism_number_candidate;
                                 if(target_prism_new != target_prism) target_prism_change_requested = true;
-                            } 
+                            }
+                            if(prism_number_candidate == 0)
+                            {
+                                target_prism_new = default_target_prism;
+                                target_prism_change_requested = true;
+                            }
                         }
 
-
-                        if(!direct_meas_mode_active && !target_prism_change_requested){    // there is nothing to do, reply Ok now 
+                        if(!direct_meas_mode_active && target_prism_change_requested){    // there is nothing to do, reply Ok now 
                             sleep(0.01);
                             Config_tx_mode();
                             data = "nOk";
@@ -170,6 +175,11 @@ void Received_data_check()
                             direct_meas_mode_requested = false;
                         }
                         else{
+                            sleep(0.01);
+                            Config_tx_mode();
+                            data = "nNo";
+                            txlora(data);
+						    Config_rx_mode();
                             direct_meas_mode_requested = false;
                         }
 						continue;
@@ -270,7 +280,8 @@ int main(int argc, char **argv)
     //Theodolite number (to differentiate data if many theodolites target one prism)
     n.getParam("theodolite_number", theodolite_number);
     //Number of target prism
-    n.getParam("target_prism", target_prism); 
+    n.getParam("target_prism", default_target_prism);
+    target_prism = default_target_prism;
     target_prism_new = target_prism;
     //Number of measurements decided   
     int number_of_measurements_choice = 10;
