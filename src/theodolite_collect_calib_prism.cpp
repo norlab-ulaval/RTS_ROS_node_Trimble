@@ -25,7 +25,6 @@
 
 using namespace std;
 
-
 // #############################################
 // #############################################
 //
@@ -48,7 +47,6 @@ double meas_distance;
 uint32_t secs;
 uint32_t nsecs;
 uint32_t former_nsecs=0;
-
 
 struct TheodoliteMeasurement{
     byte theodolite_number;    
@@ -183,7 +181,6 @@ void Received_data_check()
     
 }
 
-
 void print_marker_table(std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure){
     int number_of_theodolites = markers_data_structure.size();
     if(!number_of_theodolites) return;
@@ -206,7 +203,6 @@ void print_marker_table(std::vector<std::vector<TheodoliteMeasurement>> markers_
     }
 }
 
-
 // #############################################
 // #############################################
 // Main program
@@ -224,8 +220,8 @@ int main(int argc, char **argv)
     
     //general variables
     std::string tmp_string;
-    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS, COLLECT, COLLECT_MULTIPLE, COLLECT_DATA, WAIT_REPLY, SAVE, SWITCH_TO_TRACKING, WAIT_FOR_SWITCH2_SUCCESS, QUIT};
-    enum TheodoliteState { UNKNOWN, COMMON_PRISM, PRIVATE_PRISM};
+    enum State { INIT, SWITCH_THEODOLITES, WAIT_FOR_SWITCH_SUCCESS,COLLECT, COLLECT_MULTIPLE, COLLECT_DATA, WAIT_REPLY, SAVE, SWITCH_TO_TRACKING, WAIT_FOR_SWITCH2_SUCCESS, QUIT};
+    enum TheodoliteState {UNKNOWN, COMMON_PRISM, PRIVATE_PRISM};
 
     std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure;
     std::vector<TheodoliteState> theodolite_states;
@@ -277,7 +273,7 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                std::cout << "How many markers do we have? "; 
+                std::cout << "How many prism poses do we have to do? "; 
                 std::getline(std::cin, tmp_string);
                 try{
                     number_of_markers = stoi(tmp_string);
@@ -293,7 +289,7 @@ int main(int argc, char **argv)
                 }
 
                 if(number_of_theodolites < 1 || number_of_markers < 1 || (prism_used_for_calibration < 1 && prism_used_for_calibration > 9)){
-                    std::cout << std::endl << "Zero or minus number of theodolites or markers or prism number. C'mon... " << std::endl;
+                    std::cout << std::endl << "Zero or minus number of theodolites or prism poses or prism number. C'mon... " << std::endl;
                     continue;
                 }                
 
@@ -383,7 +379,7 @@ int main(int argc, char **argv)
             
             case COLLECT:
                 print_marker_table(markers_data_structure);
-                std::cout << "to request a mesurement: d[x]. To exit CTRL+D. Currently selected theodolite n." << theodolite_currently_talked_to+1 << std::endl;
+                std::cout << "to request a mesurement: d[x]. To exit CTRL+D." << std::endl;
                 std::cout << "Input: ";
                 
                 std::getline(std::cin, tmp_string);
@@ -403,10 +399,10 @@ int main(int argc, char **argv)
                         continue;
                     }
                     if(marker_currently_waited_for < 0 || marker_currently_waited_for >= number_of_markers){                  
-                        std::cout << std::endl << "Invalid marker number." << std::endl;
+                        std::cout << std::endl << "Invalid prism pose." << std::endl;
                         continue;
                     }
-                    std::cout << std::endl << "Requesting measurement of the marker" << marker_currently_waited_for+1 << std::endl;
+                    std::cout << std::endl << "Requesting measurement of the prism" << marker_currently_waited_for+1 << std::endl;
                     theodolite_currently_talked_to=0; 
                     list_direct_measurement = {};
                     s = COLLECT_MULTIPLE;    
@@ -417,6 +413,7 @@ int main(int argc, char **argv)
 
             case COLLECT_MULTIPLE:
 
+								//8 data in a raw taken
                 if(list_direct_measurement.size()<=8){
                     s=COLLECT_DATA;
                     continue;
@@ -508,7 +505,7 @@ int main(int argc, char **argv)
             case SAVE:
                 {
                     ofstream output_file;
-                    output_file.open("theodolite_reference_markers.txt", ios::out | ios::trunc);
+                    output_file.open("theodolite_reference_prisms.txt", ios::out | ios::trunc);
                     output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec" << std::endl;
                     for(int i = 0; i < number_of_theodolites; i++){
                         for(int j = 0; j < number_of_markers; j++){
