@@ -179,7 +179,15 @@ target_link_libraries(theodolite_node
         ${WIRINGPI_LIBRARIES}
         )
 
+add_executable(theodolite_collect_calib_prisms src/theodolite_collect_calib_prism.cpp src/lora_radio.cpp src/radio_message_serialize.cpp)
+add_dependencies(theodolite_collect_calib_prisms ${catkin_EXPORTED_TARGETS})
+target_link_libraries(theodolite_collect_calib_prisms 
+        ${catkin_LIBRARIES} 
+        ${WIRINGPI_LIBRARIES}
+        )
 
+
+ 
 
 
 
