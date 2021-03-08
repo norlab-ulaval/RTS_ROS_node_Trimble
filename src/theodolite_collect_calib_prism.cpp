@@ -38,6 +38,8 @@ bool received_dNo = false;
 bool received_nOk = false;
 bool received_nNo = false;
 bool received_measurement = false;
+int iterator_bad_status_received = 0;
+bool bad_status_error = false;
 
 byte status;
 byte theodolite_number;
@@ -378,6 +380,16 @@ int main(int argc, char **argv)
             break;
             
             case COLLECT:
+
+								if(bad_status_error == true)
+								{
+										for(int j = 0; j < number_of_theodolites; j++){
+												markers_data_structure[j][marker_currently_waited_for].status=255;        
+										}
+										bad_status_error = false;
+										std::cout << "One theodolite was not able to target the prism. Direct measurement were not saved for this position. Check the setup !" << std::endl;
+								}
+			
                 print_marker_table(markers_data_structure);
                 std::cout << "to request a mesurement: d[x]. To exit CTRL+D." << std::endl;
                 std::cout << "Input: ";
@@ -406,6 +418,7 @@ int main(int argc, char **argv)
                     theodolite_currently_talked_to=0; 
                     list_direct_measurement = {};
                     s = COLLECT_MULTIPLE;    
+										iterator_bad_status_received = 0;
                 }
                         
                 continue;
@@ -433,6 +446,7 @@ int main(int argc, char **argv)
                     markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance /= list_direct_measurement.size();
                     list_direct_measurement = {};
                     theodolite_currently_talked_to+=1;
+										iterator_bad_status_received = 0;
 
                     if(theodolite_currently_talked_to == number_of_theodolites){
                         theodolite_currently_talked_to = 0; 
@@ -466,6 +480,15 @@ int main(int argc, char **argv)
                     if(received_measurement){
                         if(status!=0){
                             std::cout << "The theodolite responded with a non-zero status: " << (int)status << "which means an error. Check it." << std::endl;
+														iterator_bad_status_received++;
+														
+														if(iterator_bad_status_received>10)
+														{
+																s = COLLECT;
+																bad_status_error = true; 
+																iterator_bad_status_received = 0;
+																continue;
+														}
                         }
                         else{
                             if(nsecs==former_nsecs){
