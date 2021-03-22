@@ -10,6 +10,8 @@
 #include <fstream>
 #include <chrono>
 #include <math.h>
+#include<Eigen/Dense>
+#include <list>
 
 //#include <mutex>
 //#include <deque>
@@ -203,6 +205,104 @@ void print_marker_table(std::vector<std::vector<TheodoliteMeasurement>> markers_
         }
         std::cout << std::endl;
     }
+}
+
+Matrix4f ptp_minimization(Matrix3f P, Matrix3f Q)
+{
+	Vector3f mean_p(0, 0, 0);
+	Vector3f mean_q(0, 0, 0);
+
+	mean_p(0) = (P.block<1,P.cols()>(0,0)).mean();
+	mean_p(1) = (P.block<1,P.cols()>(1,0)).mean();
+	mean_p(2) = (P.block<1,P.cols()>(2,0)).mean();
+	mean_q(0) = (Q.block<1,Q.cols()>(0,0)).mean();
+	mean_q(1) = (Q.block<1,Q.cols()>(1,0)).mean();
+	mean_q(2) = (Q.block<1,Q.cols()>(2,0)).mean();
+
+	Matrix3f P_mean = (P).colwise() - mean_p;
+	Matrix3f Q_mean = (Q).colwise() - mean_q;
+	
+	Matrix3f H = P_mean*Q_mean.transpose();
+
+	JacobiSVD<MatrixXf> svd(H, ComputeThinU | ComputeThinV);
+	Matrix3f V = svd.matrixV();
+	Matrix3f U = svd.matrixU();
+	Matrix3f R = V.transpose()*U.transpose();
+
+	if(R.determinant()<0)
+	{
+		Matrix3f V_t = V.transpose();
+		V_t.block<3,1>(0,2)=-V_t.block<3,1>(0,2);
+		R = V_t*U.transpose();
+	}
+
+	Vector3f t = mean_q - R*mean_p;
+	std::cout << "rotation :" << R << std::endl;
+	std::cout << "translation: " << t << std::endl; 
+
+	Matrix4f T = Matrix4f::Identity();
+	T.block<3,3>(0,0)=R;
+	T.block<3,1>(0,3)=t;
+
+	return T;
+}
+
+Vector4f give_points(float d, float ha, float va)
+{
+	d = d + 0.01; // add 10mm because measurments done by raspi
+	x=d*cos(-ha)*cos(acos(0.0)-va);
+	y=d*sin(-ha)*cos(acos(0.0)-va);
+	z=d*sin(acos(0.0)-va);
+	Vector4f result(x, y, z, 1);
+	return result;
+}
+
+float accuracy_measurements(int number_of_theodolites, std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure, int number_of_markers)
+{
+	//Create point cloud	
+	list<Matrix4f> pointclouds = {};
+	for(int j = 0; j < number_of_theodolites; j++)
+	{
+		// Read points already taken
+		list<Vector4f> points = {};
+		for(int i = 0; i < number_of_markers; i++)
+		{
+			if(markers_data_structure[j][i].status!=255)
+			{
+				float meas_distance = markers_data_structure[j][i].meas_distance;     
+				float azimuth = markers_data_structure[j][i].azimuth;
+				float elevation = markers_data_structure[j][i].elevation;  
+				points.push_back(give_points(meas_distance, azimuth, elevation));
+			}
+		}
+		Matrix4f pointcloud(4, points.size());
+		for (auto it = points.begin(); it != points.end(); ++it)
+		{
+			pointcloud.block<4,1>(0,it) = *it
+		}
+	}
+	std::cout << "pointcloud: " << pointcloud << std::endl;
+
+	//Point to point minimization
+	list<float> inter_distance = {};
+	Matrix4f Q = pointcloud.front();
+	
+	for (auto it = pointcloud.begin()+1; it != pointcloud.end(); ++it)
+	{
+		Matrix4f P = *it;
+		Matrix4f T = ptp_minimization(P, Q);
+		Matrix4f corrected_points = T*P;
+		
+		for(int i = 0; i < corrected_points.cols(); i++)
+		{
+			inter_distance.push_back((corrected_points.block<3,1>(0,i)-Q.block<3,1>(0,i)).norm());
+		}
+	}
+
+	//Compute results (max inter-distance between corrected point cloud)
+	float accuracy = std::max_element(inter_distance, inter_distance + inter_distance.size()-1);
+
+	return accuracy;	
 }
 
 // #############################################
@@ -449,7 +549,16 @@ int main(int argc, char **argv)
 										iterator_bad_status_received = 0;
 
                     if(theodolite_currently_talked_to == number_of_theodolites){
-                        theodolite_currently_talked_to = 0; 
+                        theodolite_currently_talked_to = 0;
+												if(number_of_theodolites>1)
+												{
+													float accuracy = accuracy_measurements(number_of_theodolites, markers_data_structure, number_of_markers);
+													std::cout << "Accuracy of the total measurements (max error inter distance in common frame): " << accuracy << "m" << std::endl;
+													if(accuracy>0.01)
+													{
+														std::cout << "Measurements seems not good ! Should redo the last one or the first one !" << std::endl;
+													}
+												}
                         s = COLLECT;
                         break;
                     }else{    

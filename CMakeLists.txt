@@ -15,6 +15,9 @@ find_package(catkin REQUIRED COMPONENTS
   theodolite_node_msgs
 )
 
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+include_directories(${EIGEN_INCLUDE_DIR})
+
 ## Generate added messages and services
 generate_messages(DEPENDENCIES std_msgs)
 
@@ -184,6 +187,7 @@ add_dependencies(theodolite_collect_calib_prisms ${catkin_EXPORTED_TARGETS})
 target_link_libraries(theodolite_collect_calib_prisms 
         ${catkin_LIBRARIES} 
         ${WIRINGPI_LIBRARIES}
+				Eigen3::Eigen
         )
 
 
