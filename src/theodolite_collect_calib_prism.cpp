@@ -26,6 +26,7 @@
 #define MAX_ATTEMPTS_BEFORE_SHUTDOWN 3
 
 using namespace std;
+using namespace Eigen;
 
 // #############################################
 // #############################################
@@ -207,22 +208,22 @@ void print_marker_table(std::vector<std::vector<TheodoliteMeasurement>> markers_
     }
 }
 
-Matrix4f ptp_minimization(Matrix3f P, Matrix3f Q)
+Matrix4f ptp_minimization(MatrixXf P, MatrixXf Q)
 {
-	Vector3f mean_p(0, 0, 0);
-	Vector3f mean_q(0, 0, 0);
+	VectorXf mean_p(3);
+	VectorXf mean_q(3);
 
-	mean_p(0) = (P.block<1,P.cols()>(0,0)).mean();
-	mean_p(1) = (P.block<1,P.cols()>(1,0)).mean();
-	mean_p(2) = (P.block<1,P.cols()>(2,0)).mean();
-	mean_q(0) = (Q.block<1,Q.cols()>(0,0)).mean();
-	mean_q(1) = (Q.block<1,Q.cols()>(1,0)).mean();
-	mean_q(2) = (Q.block<1,Q.cols()>(2,0)).mean();
+	mean_p(0) = (P.row(0)).mean();
+	mean_p(1) = (P.row(1)).mean();
+	mean_p(2) = (P.row(2)).mean();
+	mean_q(0) = (Q.row(0)).mean();
+	mean_q(1) = (Q.row(1)).mean();
+	mean_q(2) = (Q.row(2)).mean();
 
-	Matrix3f P_mean = (P).colwise() - mean_p;
-	Matrix3f Q_mean = (Q).colwise() - mean_q;
+	MatrixXf P_mean = (P).colwise() - mean_p;
+	MatrixXf Q_mean = (Q).colwise() - mean_q;
 	
-	Matrix3f H = P_mean*Q_mean.transpose();
+	MatrixXf H = P_mean*Q_mean.transpose();
 
 	JacobiSVD<MatrixXf> svd(H, ComputeThinU | ComputeThinV);
 	Matrix3f V = svd.matrixV();
@@ -249,10 +250,10 @@ Matrix4f ptp_minimization(Matrix3f P, Matrix3f Q)
 
 Vector4f give_points(float d, float ha, float va)
 {
-	d = d + 0.01; // add 10mm because measurments done by raspi
-	x=d*cos(-ha)*cos(acos(0.0)-va);
-	y=d*sin(-ha)*cos(acos(0.0)-va);
-	z=d*sin(acos(0.0)-va);
+	float d1 = d + 0.01; // add 10mm because measurments done by raspi
+	float x=d1*cos(-ha)*cos(acos(0.0)-va);
+	float y=d1*sin(-ha)*cos(acos(0.0)-va);
+	float z=d1*sin(acos(0.0)-va);
 	Vector4f result(x, y, z, 1);
 	return result;
 }
@@ -260,7 +261,7 @@ Vector4f give_points(float d, float ha, float va)
 float accuracy_measurements(int number_of_theodolites, std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure, int number_of_markers)
 {
 	//Create point cloud	
-	list<Matrix4f> pointclouds = {};
+	list<MatrixXf> pointclouds = {};
 	for(int j = 0; j < number_of_theodolites; j++)
 	{
 		// Read points already taken
@@ -275,34 +276,40 @@ float accuracy_measurements(int number_of_theodolites, std::vector<std::vector<T
 				points.push_back(give_points(meas_distance, azimuth, elevation));
 			}
 		}
-		Matrix4f pointcloud(4, points.size());
+		MatrixXf pointcloud(4, points.size());
+		int compteur = 0;
 		for (auto it = points.begin(); it != points.end(); ++it)
 		{
-			pointcloud.block<4,1>(0,it) = *it
+			pointcloud.col(compteur) = *it;
+			compteur += 1;
 		}
+		pointclouds.push_back(pointcloud);
 	}
-	std::cout << "pointcloud: " << pointcloud << std::endl;
+	//std::cout << "pointcloud: " << pointclouds << std::endl;
 
 	//Point to point minimization
 	list<float> inter_distance = {};
-	Matrix4f Q = pointcloud.front();
+	MatrixXf Q = (pointclouds.front()).topRows(3);
 	
-	for (auto it = pointcloud.begin()+1; it != pointcloud.end(); ++it)
+	auto it = pointclouds.begin();
+	advance(it,1);
+	for (it; it != pointclouds.end(); ++it)
 	{
-		Matrix4f P = *it;
+		MatrixXf P_4 = *it;
+		Matrix3f P = P_4.topRows(3);
 		Matrix4f T = ptp_minimization(P, Q);
-		Matrix4f corrected_points = T*P;
+		MatrixXf corrected_points = T*P_4;
+		MatrixXf corrected_points_3 = corrected_points.topRows(3);
 		
 		for(int i = 0; i < corrected_points.cols(); i++)
 		{
-			inter_distance.push_back((corrected_points.block<3,1>(0,i)-Q.block<3,1>(0,i)).norm());
+			inter_distance.push_back((corrected_points_3.col(i)-Q.col(i)).norm());
 		}
 	}
 
 	//Compute results (max inter-distance between corrected point cloud)
-	float accuracy = std::max_element(inter_distance, inter_distance + inter_distance.size()-1);
-
-	return accuracy;	
+	float accuracy = *std::max_element(inter_distance.begin(),inter_distance.end());
+	return accuracy;
 }
 
 // #############################################
