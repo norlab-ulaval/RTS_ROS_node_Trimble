@@ -222,28 +222,38 @@ Matrix4f ptp_minimization(MatrixXf P, MatrixXf Q)
 
 	MatrixXf P_mean = (P).colwise() - mean_p;
 	MatrixXf Q_mean = (Q).colwise() - mean_q;
+
+  std::cout << "P: " << P << std::endl;
+  std::cout << "Q: " << Q << std::endl;
+  std::cout << "mean_p: " << mean_p << std::endl;
+  std::cout << "mean_q: " << mean_q << std::endl;
+  std::cout << "P_mean: " << P_mean << std::endl;
+  std::cout << "Q_mean: " << Q_mean << std::endl;
 	
-	MatrixXf H = P_mean*Q_mean.transpose();
+	MatrixXf H = P_mean*(Q_mean.transpose());
+  std::cout << "H: " << H << std::endl;
 
 	JacobiSVD<MatrixXf> svd(H, ComputeThinU | ComputeThinV);
 	Matrix3f V = svd.matrixV();
 	Matrix3f U = svd.matrixU();
+  MatrixXf D = U*svd.singularValues().asDiagonal()*V.transpose();
+  std::cout << "D: " << D << std::endl;
 	Matrix3f R = V.transpose()*U.transpose();
 
 	if(R.determinant()<0)
 	{
+    std::cout << "det negative" << std::endl;
 		Matrix3f V_t = V.transpose();
 		V_t.block<3,1>(0,2)=-V_t.block<3,1>(0,2);
 		R = V_t*U.transpose();
 	}
 
-	Vector3f t = mean_q - R*mean_p;
-	std::cout << "rotation :" << R << std::endl;
-	std::cout << "translation: " << t << std::endl; 
+	Vector3f t = mean_q - R*mean_p; 
 
 	Matrix4f T = Matrix4f::Identity();
 	T.block<3,3>(0,0)=R;
 	T.block<3,1>(0,3)=t;
+  std::cout << T << std::endl;
 
 	return T;
 }
@@ -260,10 +270,14 @@ Vector4f give_points(float d, float ha, float va)
 
 float accuracy_measurements(int number_of_theodolites, std::vector<std::vector<TheodoliteMeasurement>> markers_data_structure, int number_of_markers)
 {
+  std::cout << "Begin computation of accuracy !" << std::endl;
+  bool enough_markers = true;
+  int number_of_markers_taken = 0;
 	//Create point cloud	
 	list<MatrixXf> pointclouds = {};
 	for(int j = 0; j < number_of_theodolites; j++)
 	{
+    number_of_markers_taken = 0;
 		// Read points already taken
 		list<Vector4f> points = {};
 		for(int i = 0; i < number_of_markers; i++)
@@ -276,40 +290,59 @@ float accuracy_measurements(int number_of_theodolites, std::vector<std::vector<T
 				points.push_back(give_points(meas_distance, azimuth, elevation));
 			}
 		}
+    if(points.size()<=1)
+    {
+      enough_markers = false;
+    }
+
 		MatrixXf pointcloud(4, points.size());
 		int compteur = 0;
+    std::cout << "points: " << std::endl;
 		for (auto it = points.begin(); it != points.end(); ++it)
 		{
+      std::cout << *it << std::endl;
 			pointcloud.col(compteur) = *it;
 			compteur += 1;
 		}
 		pointclouds.push_back(pointcloud);
 	}
-	//std::cout << "pointcloud: " << pointclouds << std::endl;
 
-	//Point to point minimization
-	list<float> inter_distance = {};
-	MatrixXf Q = (pointclouds.front()).topRows(3);
-	
-	auto it = pointclouds.begin();
-	advance(it,1);
-	for (it; it != pointclouds.end(); ++it)
-	{
-		MatrixXf P_4 = *it;
-		Matrix3f P = P_4.topRows(3);
-		Matrix4f T = ptp_minimization(P, Q);
-		MatrixXf corrected_points = T*P_4;
-		MatrixXf corrected_points_3 = corrected_points.topRows(3);
-		
-		for(int i = 0; i < corrected_points.cols(); i++)
-		{
-			inter_distance.push_back((corrected_points_3.col(i)-Q.col(i)).norm());
-		}
-	}
+  if(enough_markers)
+  {
+    std::cout << "Compute accuracy !" << std::endl;
 
-	//Compute results (max inter-distance between corrected point cloud)
-	float accuracy = *std::max_element(inter_distance.begin(),inter_distance.end());
-	return accuracy;
+	  //Point to point minimization
+	  list<float> inter_distance = {};
+	  MatrixXf Q = (pointclouds.front()).topRows(3);
+    std::cout << "Q: " << Q << std::endl;
+	  auto it = pointclouds.begin();
+	  advance(it,1);
+	  for (it; it != pointclouds.end(); ++it)
+	  {
+		  MatrixXf P_4 = *it;
+      std::cout << "P4: " << P_4 << std::endl;
+		  MatrixXf P = P_4.topRows(3);
+      std::cout << "P: " << P << std::endl;
+		  Matrix4f T = ptp_minimization(P, Q);
+		  MatrixXf corrected_points = T*P_4;
+      std::cout << "corrected_points: " << corrected_points << std::endl;
+		  MatrixXf corrected_points_3 = corrected_points.topRows(3);
+      std::cout << "Corrected: " << corrected_points_3 << std::endl;
+		  
+		  for(int i = 0; i < corrected_points.cols(); i++)
+		  {
+        std::cout << "distance: " << corrected_points_3.col(i) << Q.col(i) << (corrected_points_3.col(i)-Q.col(i)).norm() << std::endl;
+			  inter_distance.push_back((corrected_points_3.col(i)-Q.col(i)).norm());
+		  }
+	  };
+	  //Compute results (max inter-distance between corrected point cloud)
+	  float accuracy = *std::max_element(inter_distance.begin(),inter_distance.end());
+	  return accuracy;
+  }
+  else
+  {
+    return -1;
+  }
 }
 
 // #############################################
@@ -496,6 +529,19 @@ int main(int argc, char **argv)
 										bad_status_error = false;
 										std::cout << "One theodolite was not able to target the prism. Direct measurement were not saved for this position. Check the setup !" << std::endl;
 								}
+
+                if(number_of_theodolites>1)
+								{
+									float accuracy = accuracy_measurements(number_of_theodolites, markers_data_structure, number_of_markers);
+                  if(accuracy!=-1)
+                  {
+									  std::cout << "Accuracy: " << accuracy << "meters" << std::endl;
+									  if(accuracy>0.01)
+									  {
+										  std::cout << "Measurements seems not good ! Should redo the last one or the first one !" << std::endl;
+									  }
+                  }
+								}
 			
                 print_marker_table(markers_data_structure);
                 std::cout << "to request a mesurement: d[x]. To exit CTRL+D." << std::endl;
@@ -539,6 +585,13 @@ int main(int argc, char **argv)
                     continue;
                 }
                 else{
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].status = 0;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].theodolite_number = theodolite_currently_talked_to+1;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].elevation = 0;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].azimuth = 0;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].meas_distance = 0;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].sec = secs;
+                    markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].nsec = nsecs;
                     for(auto it = list_direct_measurement.begin(); it!= list_direct_measurement.end(); ++it){
                         markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].status = 0;
                         markers_data_structure[theodolite_currently_talked_to][marker_currently_waited_for].theodolite_number = theodolite_currently_talked_to+1;
@@ -557,15 +610,6 @@ int main(int argc, char **argv)
 
                     if(theodolite_currently_talked_to == number_of_theodolites){
                         theodolite_currently_talked_to = 0;
-												if(number_of_theodolites>1)
-												{
-													float accuracy = accuracy_measurements(number_of_theodolites, markers_data_structure, number_of_markers);
-													std::cout << "Accuracy of the total measurements (max error inter distance in common frame): " << accuracy << "m" << std::endl;
-													if(accuracy>0.01)
-													{
-														std::cout << "Measurements seems not good ! Should redo the last one or the first one !" << std::endl;
-													}
-												}
                         s = COLLECT;
                         break;
                     }else{    
