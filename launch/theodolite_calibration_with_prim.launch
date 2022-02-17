@@ -3,6 +3,8 @@
 
         <!-- Parameter to show data on terminal if needed. Set True to use it -->
         <param name="show_data" value= "true" />
+	    <!-- Parameter to set the number of measurements desired during calibration -->
+	    <param name="calib_meas_nb" value="8" />
 
 	</node>
 </launch>
