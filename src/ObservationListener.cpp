@@ -25,7 +25,7 @@ void ObservationListener::observationTracked(const SSI::TrackingObservationsEven
     double horizontal_angle = 0;
     double vertical_angle = 0;
     double distance = 0;
-	double timestamp_sec = 0;
+    double timestamp_sec = 0;
     double timestamp_nsec = 0;
     int error = 0;
 
