@@ -211,22 +211,22 @@ void Received_data_check()
 }
 
 
-void Check_new_observation(std::shared_ptr<ObservationListener> observation_listener, int number_of_measurements_new, int number_of_measurements_old)
+void Check_new_observation(std::shared_ptr<ObservationListener> observation_listener, int &number_of_measurements_new, int &number_of_measurements_old)
 {
-    number_of_measurements_new = observation_listener->getSizeVector();     //Get number of measurements stored
-	if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
-	{
-		HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
-		VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
-		Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
-		Time_sec = (observation_listener->getObservations())[3][number_of_measurements_new-1];
+    number_of_measurements_new = observation_listener->getSizeVector(); //Get number of measurements stored
+    if(number_of_measurements_new > number_of_measurements_old)         //If a new one is detected
+    {
+        HA = (observation_listener->getObservations())[0][number_of_measurements_new-1];
+        VA = (observation_listener->getObservations())[1][number_of_measurements_new-1];
+        Dist = (observation_listener->getObservations())[2][number_of_measurements_new-1];
+        Time_sec = (observation_listener->getObservations())[3][number_of_measurements_new-1];
         Time_nsec = (observation_listener->getObservations())[4][number_of_measurements_new-1];
-		error_theodolite = (observation_listener->getObservations())[5][number_of_measurements_new-1];
-		number_of_measurements_old = number_of_measurements_new;
+        error_theodolite = (observation_listener->getObservations())[5][number_of_measurements_new-1];
+        number_of_measurements_old = number_of_measurements_new;
 
-		if(show_data)
-		{
-			//Print data of measurement
+        if(show_data)
+        {
+            //Print data of measurement
             ROS_INFO("%i  measurements taken", number_of_measurements_new);
             ROS_INFO("HORIZONTAL_ANGLE_VECTOR: %f", HA);
             ROS_INFO("VERTICAL_ANGLE_VECTOR: %f", VA);
@@ -234,8 +234,8 @@ void Check_new_observation(std::shared_ptr<ObservationListener> observation_list
             ROS_INFO("TIMESTAMPSEC_VECTOR: %f", Time_sec);
             ROS_INFO("TIMESTAMPNSEC_VECTOR: %f", Time_nsec);
             ROS_INFO("ERROR: %i", error_theodolite);
-		}
-	}
+        }
+    }
 }
 
 void Lora_send_measurement(int theodolite_number, int error_theodolite, double HA, double VA, double Dist, double time_sec, double time_nsec)
