@@ -137,13 +137,14 @@ void Received_data_check(ros::Publisher data_pub, int number_theodolite_called)
 
                         if(show_data)
                         {
-                            ROS_INFO("theodolite: %d ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %d ; Time server nsec: %d ; Status: %d \n", 
+                            ROS_INFO("theodolite: %d ; HA: %f ; VA: %f ; Distance: %f ; Time server sec: %d ; Time server nsec: %d ; Status: %d%d \n", 
                                theodolite_number,
                                azimuth,
                                elevation,
                                distance,
                                secs,
                                nsecs,
+                               theodolite_number,
                                status);
                         }
                         data_pub.publish(msg);
