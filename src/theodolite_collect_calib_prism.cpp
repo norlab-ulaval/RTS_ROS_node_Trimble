@@ -19,6 +19,7 @@
 #include <iostream>
 #include <condition_variable>
 #include <chrono>
+#include <limits>
 
 #define RECEIVE_TIMEOUT_MS 2000
 #define TIME_BEFORE_NEXT_TX_ATTEMPT 10000
@@ -46,7 +47,7 @@ bool bad_status_error = false;
 int calib_meas_nb = 8; // Number of measurements to take per point during calibration
 
 byte status;
-byte theodolite_number;
+byte theodolite_number
 double elevation;
 double azimuth;
 double meas_distance;
@@ -689,17 +690,20 @@ int main(int argc, char **argv)
             case SAVE:
                 {
                     ofstream output_file;
+                    output_file.precision(std::numeric_limits<double>::max_digits10);
                     output_file.open("theodolite_reference_prisms.txt", ios::out | ios::trunc);
-                    output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec" << std::endl;
-                    for(int i = 0; i < number_of_theodolites; i++){
-                        for(int j = 0; j < number_of_markers; j++){
-                            output_file << i+1 << " , " << j+1 
-                                << " , " << (int)markers_data_structure[i][j].status 
-                                << " , " << markers_data_structure[i][j].elevation
-                                << " , " << markers_data_structure[i][j].azimuth
-                                << " , " << markers_data_structure[i][j].meas_distance
-                                << " , " << markers_data_structure[i][j].sec
-                                << " , " << markers_data_structure[i][j].nsec << std::endl;         
+                    output_file << "theodolite_number , marker_number , status , elevation , azimuth , distance , sec , nsec\n";
+                    for(int i = 0; i < number_of_theodolites; ++i) {
+                        for(int j = 0; j < number_of_markers; ++j) {
+                          const TheodoliteMeasurement& marker = markers_data_structure[i][j];
+                          output_file
+                              << i + 1 << " , " << j + 1 << " , "
+                              << (int) marker.status << " , "
+                              << marker.elevation << " , "
+                              << marker.azimuth << " , "
+                              << marker.meas_distance << " , "
+                              << marker.sec << " , "
+                              << marker.nsec << '\n';
                         }
                     }
                     output_file.close();
