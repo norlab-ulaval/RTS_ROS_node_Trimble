@@ -53,19 +53,19 @@ def point_to_point_minimization(P, Q):
 	for i in range(0,Q_mu.shape[1]):
 		Q_mu[0:3,i] = Q[0:3,i] - mu_q
 	# Compute cross covariance matrix
-	H = P_mu@Q_mu.T
+	H = P_mu.dot(Q_mu.T)
 	# Use SVD decomposition
 	U, s, V = np.linalg.svd(H)
 	# Compute rotation
-	R = V.T@U.T
+	R = V.T.dot(U.T)
 	if(np.linalg.det(R)<0):
 		#print(V.T)
 		V_t = V.T
 		V_t[:,2] = -V_t[:,2]
-		R = V_t@U.T
+		R = V_t.dot(U.T)
 
 	# Compute translation
-	t = mu_q - R@mu_p
+	t = mu_q - R.dot(mu_p)
 	# Compute rigid transformation obtained
 	T = np.eye(4)
 	T[0:3,0:3]=R
@@ -126,8 +126,8 @@ def read_marker_file(file_name):
 	T_12_rasp = point_to_point_minimization(Points_t2_rasp_arr, Points_t1_rasp_arr)
 	T_13_rasp = point_to_point_minimization(Points_t3_rasp_arr, Points_t1_rasp_arr)
 	trimble_1 = Points_t1_rasp_arr
-	trimble_2 = T_12_rasp@Points_t2_rasp_arr
-	trimble_3 = T_13_rasp@Points_t3_rasp_arr
+	trimble_2 = T_12_rasp.dot(Points_t2_rasp_arr)
+	trimble_3 = T_13_rasp.dot(Points_t3_rasp_arr)
 
 	distance = calculate_distance(trimble_1, trimble_2, trimble_3, compteur)
 
@@ -148,8 +148,8 @@ def read_marker_file(file_name):
 			T_12_rasp = point_to_point_minimization(j, i)
 			T_13_rasp = point_to_point_minimization(k, i)
 			trimble_1 = i
-			trimble_2 = T_12_rasp@j
-			trimble_3 = T_13_rasp@k
+			trimble_2 = T_12_rasp.dot(j)
+			trimble_3 = T_13_rasp.dot(k)
 			distance = calculate_distance(trimble_1, trimble_2, trimble_3, i.shape[1])
 			max_distance.append(round(np.max(distance),4)*1000)
 
@@ -157,8 +157,8 @@ def read_marker_file(file_name):
 			T_12_rasp = point_to_point_minimization(Points_t2_rasp_arr[:,1:-1], Points_t1_rasp_arr[:,1:-1])
 			T_13_rasp = point_to_point_minimization(Points_t3_rasp_arr[:,1:-1], Points_t1_rasp_arr[:,1:-1])
 			trimble_1 = Points_t1_rasp_arr[:,1:-1]
-			trimble_2 = T_12_rasp@Points_t2_rasp_arr[:,1:-1]
-			trimble_3 = T_13_rasp@Points_t3_rasp_arr[:,1:-1]
+			trimble_2 = T_12_rasp.dot(Points_t2_rasp_arr[:,1:-1])
+			trimble_3 = T_13_rasp.dot(Points_t3_rasp_arr[:,1:-1])
 			distance = calculate_distance(trimble_1, trimble_2, trimble_3, trimble_1.shape[1])
 
 			if(round(np.max(distance),4)*1000<10):
@@ -178,8 +178,8 @@ def read_marker_file(file_name):
 				T_12_rasp = point_to_point_minimization(t2, t1)
 				T_13_rasp = point_to_point_minimization(t3, t1)
 				trimble_1 = t1
-				trimble_2 = T_12_rasp@t2
-				trimble_3 = T_13_rasp@t3
+				trimble_2 = T_12_rasp.dot(t2)
+				trimble_3 = T_13_rasp.dot(t3)
 				distance = calculate_distance(trimble_1, trimble_2, trimble_3, trimble_1.shape[1])
 
 				if(round(np.max(distance),4)*1000<10):

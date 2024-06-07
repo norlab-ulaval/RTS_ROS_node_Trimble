@@ -43,6 +43,7 @@ bool received_nNo = false;
 bool received_measurement = false;
 int iterator_bad_status_received = 0;
 bool bad_status_error = false;
+int calib_meas_nb = 8; // Number of measurements to take per point during calibration
 
 byte status;
 byte theodolite_number;
@@ -356,6 +357,7 @@ int main(int argc, char **argv)
     ros::NodeHandle n("~");
     //Publisher of the data in a vector
     n.getParam("show_data", show_data);
+    n.getParam("calib_meas_nb", calib_meas_nb);
 
     //Configure LoRa antenna
     General_setup_lora();
@@ -579,8 +581,7 @@ int main(int argc, char **argv)
 
             case COLLECT_MULTIPLE:
 
-								//8 data in a raw taken
-                if(list_direct_measurement.size()<=8){
+                if(list_direct_measurement.size()<=calib_meas_nb){
                     s=COLLECT_DATA;
                     continue;
                 }
